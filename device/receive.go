@@ -133,6 +133,7 @@ func (device *Device) RoutineReceiveIncoming(
 		// handle each packet in the batch
 		for i, size := range sizes[:count] {
 			if size < MinMessageSize {
+				device.log.Verbosef("Received packet with invalid size (%d bytes) from %s", size, endpoints[i].DstToString())
 				continue
 			}
 
@@ -159,6 +160,7 @@ func (device *Device) RoutineReceiveIncoming(
 				// check size
 
 				if len(packet) < MessageTransportSize {
+					device.log.Verbosef("Received transport message with invalid size (%d bytes) from %s", len(packet), endpoints[i].DstToString())
 					continue
 				}
 
@@ -170,12 +172,14 @@ func (device *Device) RoutineReceiveIncoming(
 				value := device.indexTable.Lookup(receiver)
 				keypair := value.keypair
 				if keypair == nil {
+					device.log.Verbosef("Received transport message for unknown peer from %s", endpoints[i].DstToString())
 					continue
 				}
 
 				// check keypair expiry
 
 				if keypair.created.Add(RejectAfterTime).Before(time.Now()) {
+					device.log.Verbosef("Received transport message with expired key from %s", endpoints[i].DstToString())
 					continue
 				}
 
@@ -203,21 +207,24 @@ func (device *Device) RoutineReceiveIncoming(
 
 			case MessageInitiationType:
 				if len(packet) != MessageInitiationSize {
+					device.log.Verbosef("Received initiation message with invalid size (%d bytes) from %s", len(packet), endpoints[i].DstToString())
 					continue
 				}
 
 			case MessageResponseType:
 				if len(packet) != MessageResponseSize {
+					device.log.Verbosef("Received response message with invalid size (%d bytes) from %s", len(packet), endpoints[i].DstToString())
 					continue
 				}
 
 			case MessageCookieReplyType:
 				if len(packet) != MessageCookieReplySize {
+					device.log.Verbosef("Received cookie reply with invalid size (%d bytes) from %s", len(packet), endpoints[i].DstToString())
 					continue
 				}
 
 			default:
-				device.log.Verbosef("Received message with unknown type")
+				device.log.Verbosef("Received message with unknown type %d from %s", msgType, endpoints[i].DstToString())
 				continue
 			}
 
@@ -306,7 +313,7 @@ func (device *Device) RoutineHandshake(id int) {
 			reader := bytes.NewReader(elem.packet)
 			err := binary.Read(reader, binary.LittleEndian, &reply)
 			if err != nil {
-				device.log.Verbosef("Failed to decode cookie reply")
+				device.log.Verbosef("Failed to decode cookie reply from %s: %v", elem.endpoint.DstToString(), err)
 				goto skip
 			}
 
@@ -315,6 +322,7 @@ func (device *Device) RoutineHandshake(id int) {
 			entry := device.indexTable.Lookup(reply.Receiver)
 
 			if entry.peer == nil {
+				device.log.Verbosef("Received cookie reply for unknown peer from %s", elem.endpoint.DstToString())
 				goto skip
 			}
 
@@ -326,9 +334,7 @@ func (device *Device) RoutineHandshake(id int) {
 					elem.endpoint.DstToString(),
 				)
 				if !peer.cookieGenerator.ConsumeReply(&reply) {
-					device.log.Verbosef(
-						"Could not decrypt invalid cookie response",
-					)
+					device.log.Verbosef("Could not decrypt invalid cookie response from %s", elem.endpoint.DstToString())
 				}
 			}
 
@@ -339,7 +345,7 @@ func (device *Device) RoutineHandshake(id int) {
 			// check mac fields and maybe ratelimit
 
 			if !device.cookieChecker.CheckMAC1(elem.packet) {
-				device.log.Verbosef("Received packet with invalid mac1")
+				device.log.Verbosef("Received packet with invalid mac1 from %s", elem.endpoint.DstToString())
 				goto skip
 			}
 
@@ -350,6 +356,7 @@ func (device *Device) RoutineHandshake(id int) {
 				// verify MAC2 field
 
 				if !device.cookieChecker.CheckMAC2(elem.packet, elem.endpoint.DstToBytes()) {
+					device.log.Verbosef("Received packet with invalid mac2 from %s", elem.endpoint.DstToString())
 					device.SendHandshakeCookie(&elem)
 					goto skip
 				}
@@ -357,6 +364,7 @@ func (device *Device) RoutineHandshake(id int) {
 				// check ratelimiter
 
 				if !device.rate.limiter.Allow(elem.endpoint.DstIP()) {
+					device.log.Verbosef("Packet from %s dropped due to rate limiting", elem.endpoint.DstIP().String())
 					goto skip
 				}
 			}
@@ -375,7 +383,7 @@ func (device *Device) RoutineHandshake(id int) {
 			reader := bytes.NewReader(elem.packet)
 			err := binary.Read(reader, binary.LittleEndian, &msg)
 			if err != nil {
-				device.log.Errorf("Failed to decode initiation message")
+				device.log.Verbosef("Failed to decode initiation message from %s: %v", elem.endpoint.DstToString(), err)
 				goto skip
 			}
 
@@ -410,7 +418,7 @@ func (device *Device) RoutineHandshake(id int) {
 			reader := bytes.NewReader(elem.packet)
 			err := binary.Read(reader, binary.LittleEndian, &msg)
 			if err != nil {
-				device.log.Errorf("Failed to decode response message")
+				device.log.Verbosef("Failed to decode response message from %s: %v", elem.endpoint.DstToString(), err)
 				goto skip
 			}
 
@@ -441,7 +449,7 @@ func (device *Device) RoutineHandshake(id int) {
 			err = peer.BeginSymmetricSession()
 
 			if err != nil {
-				device.log.Errorf("%v - Failed to derive keypair: %v", peer, err)
+				device.log.Verbosef("%v - Failed to derive keypair: %v", peer, err)
 				goto skip
 			}
 
