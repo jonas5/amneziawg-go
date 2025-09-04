@@ -4,7 +4,7 @@
             "outputFile": "org.amnezia.awg.ui-mergeReleaseResources-47:/values-night-v8/values-night-v8.xml",
             "map": [
                 {
-                    "source": "/home/jonas/gits/amneziawg-android/ui/src/main/res/values-night/themes.xml",
+                    "source": "/home/jonas/gits/amneziawg-go/amneziawg-android/ui/src/main/res/values-night/themes.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -20,6 +20,23 @@
                         "endLines": "35",
                         "endColumns": "12",
                         "endOffsets": "2536"
+                    }
+                },
+                {
+                    "source": "/home/jonas/gits/amneziawg-go/amneziawg-android/ui/src/main/res/values-night/logviewer_colors.xml",
+                    "from": {
+                        "startLines": "1,2,3,4",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "16,66,116,165",
+                        "endColumns": "49,49,48,51",
+                        "endOffsets": "61,111,160,212"
+                    },
+                    "to": {
+                        "startLines": "4,5,6,7",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "153,203,253,302",
+                        "endColumns": "49,49,48,51",
+                        "endOffsets": "198,248,297,349"
                     }
                 },
                 {
@@ -40,40 +57,6 @@
                     }
                 },
                 {
-                    "source": "/home/jonas/gits/amneziawg-android/ui/src/main/res/values-night/bools.xml",
-                    "from": {
-                        "startLines": "3,2",
-                        "startColumns": "4,4",
-                        "startOffsets": "102,55",
-                        "endColumns": "50,46",
-                        "endOffsets": "148,97"
-                    },
-                    "to": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,106",
-                        "endColumns": "50,46",
-                        "endOffsets": "101,148"
-                    }
-                },
-                {
-                    "source": "/home/jonas/gits/amneziawg-android/ui/src/main/res/values-night/logviewer_colors.xml",
-                    "from": {
-                        "startLines": "1,2,3,4",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "16,66,116,165",
-                        "endColumns": "49,49,48,51",
-                        "endOffsets": "61,111,160,212"
-                    },
-                    "to": {
-                        "startLines": "4,5,6,7",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "153,203,253,302",
-                        "endColumns": "49,49,48,51",
-                        "endOffsets": "198,248,297,349"
-                    }
-                },
-                {
                     "source": "/home/jonas/.gradle/caches/transforms-3/e8b5f0cafc78a728ff89c15776141049/transformed/appcompat-1.6.1/res/values-night-v8/values-night-v8.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
@@ -88,6 +71,23 @@
                         "startOffsets": "2541,2611,2695,2779,2875,2977,3079,5934",
                         "endColumns": "69,83,83,95,101,101,93,88",
                         "endOffsets": "2606,2690,2774,2870,2972,3074,3168,6018"
+                    }
+                },
+                {
+                    "source": "/home/jonas/gits/amneziawg-go/amneziawg-android/ui/src/main/res/values-night/bools.xml",
+                    "from": {
+                        "startLines": "3,2",
+                        "startColumns": "4,4",
+                        "startOffsets": "102,55",
+                        "endColumns": "50,46",
+                        "endOffsets": "148,97"
+                    },
+                    "to": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,106",
+                        "endColumns": "50,46",
+                        "endOffsets": "101,148"
                     }
                 }
             ]

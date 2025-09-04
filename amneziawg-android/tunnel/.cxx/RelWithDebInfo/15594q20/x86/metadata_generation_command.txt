@@ -1,4 +1,4 @@
-                        -H/home/jonas/gits/amneziawg-android/tunnel/tools
+                        -H/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools
 -DCMAKE_SYSTEM_NAME=Android
 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 -DCMAKE_SYSTEM_VERSION=24
@@ -9,10 +9,10 @@
 -DCMAKE_ANDROID_NDK=/usr/lib/android-sdk/ndk/26.1.10909125
 -DCMAKE_TOOLCHAIN_FILE=/usr/lib/android-sdk/ndk/26.1.10909125/build/cmake/android.toolchain.cmake
 -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja
--DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/home/jonas/gits/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/x86
--DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/home/jonas/gits/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/x86
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/x86
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/x86
 -DCMAKE_BUILD_TYPE=RelWithDebInfo
--B/home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86
+-B/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86
 -GNinja
 -DGRADLE_USER_HOME=/home/jonas/.gradle
 -DANDROID_PACKAGE_NAME=org.amnezia.awg

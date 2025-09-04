@@ -20,13 +20,13 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "x86_64"
+          "value": "x86"
         }
       ],
       "attributes": [],
       "versionCode": 7,
       "versionName": "1.1.4",
-      "outputFile": "resources-x86_64-release-stripped.ap_"
+      "outputFile": "resources-x86-release-stripped.ap_"
     },
     {
       "type": "ONE_OF_MANY",
@@ -46,13 +46,13 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "x86"
+          "value": "x86_64"
         }
       ],
       "attributes": [],
       "versionCode": 7,
       "versionName": "1.1.4",
-      "outputFile": "resources-x86-release-stripped.ap_"
+      "outputFile": "resources-x86_64-release-stripped.ap_"
     },
     {
       "type": "ONE_OF_MANY",

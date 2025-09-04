@@ -2,7 +2,7 @@
   {
     "level_": 0,
     "message_": "Start JSON generation. Platform version: 24 min SDK version: arm64-v8a",
-    "file_": "/home/jonas/gits/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
     "tag_": "release|arm64-v8a",
     "diagnosticCode_": 0,
     "memoizedIsInitialized": 1,
@@ -14,8 +14,138 @@
   },
   {
     "level_": 0,
-    "message_": "JSON \u0027/home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a/android_gradle_build.json\u0027 was up-to-date",
-    "file_": "/home/jonas/gits/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "message_": "rebuilding JSON /home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a/android_gradle_build.json due to:",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "- a hard configure file changed, will remove stale configuration folder",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "  - /home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a/metadata_generation_command.txt (LAST_MODIFIED_CHANGED)",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "removing stale contents from \u0027/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a\u0027",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "created folder \u0027/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a\u0027",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "executing cmake /opt/cmake/bin/cmake \\\n  -H/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools \\\n  -DCMAKE_SYSTEM_NAME\u003dAndroid \\\n  -DCMAKE_EXPORT_COMPILE_COMMANDS\u003dON \\\n  -DCMAKE_SYSTEM_VERSION\u003d24 \\\n  -DANDROID_PLATFORM\u003dandroid-24 \\\n  -DANDROID_ABI\u003darm64-v8a \\\n  -DCMAKE_ANDROID_ARCH_ABI\u003darm64-v8a \\\n  -DANDROID_NDK\u003d/usr/lib/android-sdk/ndk/26.1.10909125 \\\n  -DCMAKE_ANDROID_NDK\u003d/usr/lib/android-sdk/ndk/26.1.10909125 \\\n  -DCMAKE_TOOLCHAIN_FILE\u003d/usr/lib/android-sdk/ndk/26.1.10909125/build/cmake/android.toolchain.cmake \\\n  -DCMAKE_MAKE_PROGRAM\u003d/usr/bin/ninja \\\n  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003d/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/arm64-v8a \\\n  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY\u003d/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/arm64-v8a \\\n  -DCMAKE_BUILD_TYPE\u003dRelWithDebInfo \\\n  -B/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a \\\n  -GNinja \\\n  -DGRADLE_USER_HOME\u003d/home/jonas/.gradle \\\n  -DANDROID_PACKAGE_NAME\u003dorg.amnezia.awg\n",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "/opt/cmake/bin/cmake \\\n  -H/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools \\\n  -DCMAKE_SYSTEM_NAME\u003dAndroid \\\n  -DCMAKE_EXPORT_COMPILE_COMMANDS\u003dON \\\n  -DCMAKE_SYSTEM_VERSION\u003d24 \\\n  -DANDROID_PLATFORM\u003dandroid-24 \\\n  -DANDROID_ABI\u003darm64-v8a \\\n  -DCMAKE_ANDROID_ARCH_ABI\u003darm64-v8a \\\n  -DANDROID_NDK\u003d/usr/lib/android-sdk/ndk/26.1.10909125 \\\n  -DCMAKE_ANDROID_NDK\u003d/usr/lib/android-sdk/ndk/26.1.10909125 \\\n  -DCMAKE_TOOLCHAIN_FILE\u003d/usr/lib/android-sdk/ndk/26.1.10909125/build/cmake/android.toolchain.cmake \\\n  -DCMAKE_MAKE_PROGRAM\u003d/usr/bin/ninja \\\n  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003d/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/arm64-v8a \\\n  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY\u003d/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/arm64-v8a \\\n  -DCMAKE_BUILD_TYPE\u003dRelWithDebInfo \\\n  -B/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a \\\n  -GNinja \\\n  -DGRADLE_USER_HOME\u003d/home/jonas/.gradle \\\n  -DANDROID_PACKAGE_NAME\u003dorg.amnezia.awg\n",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "Received process result: 0",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "Exiting generation of /home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a/compile_commands.json.bin normally",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "done executing cmake",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "tag_": "release|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "hard linked /home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/arm64-v8a/compile_commands.json to /home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/tools/release/arm64-v8a/compile_commands.json",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
     "tag_": "release|arm64-v8a",
     "diagnosticCode_": 0,
     "memoizedIsInitialized": 1,
@@ -28,7 +158,7 @@
   {
     "level_": 0,
     "message_": "JSON generation completed without problems",
-    "file_": "/home/jonas/gits/amneziawg-android/tunnel/tools/CMakeLists.txt",
+    "file_": "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt",
     "tag_": "release|arm64-v8a",
     "diagnosticCode_": 0,
     "memoizedIsInitialized": 1,

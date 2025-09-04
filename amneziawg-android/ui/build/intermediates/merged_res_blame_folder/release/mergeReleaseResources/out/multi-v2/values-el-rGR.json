@@ -4,7 +4,7 @@
             "outputFile": "org.amnezia.awg.ui-mergeReleaseResources-47:/values-el-rGR/values-el-rGR.xml",
             "map": [
                 {
-                    "source": "/home/jonas/gits/amneziawg-android/ui/src/main/res/values-el-rGR/strings.xml",
+                    "source": "/home/jonas/gits/amneziawg-go/amneziawg-android/ui/src/main/res/values-el-rGR/strings.xml",
                     "from": {
                         "startLines": "2,6,10,45,14,18,41,30,34,53,49,22,26,58,59,38,61,62,63,64,60,65,66,67,68,69,70,71,72,73,74,75,76,77,123,124,80,81,82,83,84,85,87,86,88,78,79,39,89,90,91,92,93,40,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,57,121,122",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",

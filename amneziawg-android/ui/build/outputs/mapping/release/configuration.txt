@@ -1,4 +1,4 @@
-# The proguard configuration file for the following section is /home/jonas/gits/amneziawg-android/ui/proguard-android-optimize.txt
+# The proguard configuration file for the following section is /home/jonas/gits/amneziawg-go/amneziawg-android/ui/proguard-android-optimize.txt
 -allowaccessmodification
 -dontusemixedcaseclassnames
 -dontobfuscate
@@ -35,8 +35,8 @@
     @androidx.annotation.Keep <init>(...);
 }
 
-# End of content from /home/jonas/gits/amneziawg-android/ui/proguard-android-optimize.txt
-# The proguard configuration file for the following section is /home/jonas/gits/amneziawg-android/ui/build/intermediates/aapt_proguard_file/release/processReleaseResources/aapt_rules.txt
+# End of content from /home/jonas/gits/amneziawg-go/amneziawg-android/ui/proguard-android-optimize.txt
+# The proguard configuration file for the following section is /home/jonas/gits/amneziawg-go/amneziawg-android/ui/build/intermediates/aapt_proguard_file/release/processReleaseResources/aapt_rules.txt
 -keep class androidx.core.app.CoreComponentFactory { <init>(); }
 -keep class androidx.profileinstaller.ProfileInstallReceiver { <init>(); }
 -keep class androidx.startup.InitializationProvider { <init>(); }
@@ -190,7 +190,7 @@
 -keep class org.amnezia.awg.widget.TvCardView { <init>(android.content.Context, android.util.AttributeSet); }
 
 
-# End of content from /home/jonas/gits/amneziawg-android/ui/build/intermediates/aapt_proguard_file/release/processReleaseResources/aapt_rules.txt
+# End of content from /home/jonas/gits/amneziawg-go/amneziawg-android/ui/build/intermediates/aapt_proguard_file/release/processReleaseResources/aapt_rules.txt
 # The proguard configuration file for the following section is /home/jonas/.gradle/caches/transforms-3/e3428a23a1fdf0201294b2c2ee3ae4b1/transformed/databinding-runtime-8.3.0/proguard.txt
 -dontwarn androidx.databinding.ViewDataBinding
 -dontwarn androidx.databinding.ViewDataBinding$LiveDataListener

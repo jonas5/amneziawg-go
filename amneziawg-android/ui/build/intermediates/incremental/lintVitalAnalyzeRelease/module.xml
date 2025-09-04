@@ -1,6 +1,6 @@
 <lint-module
     format="1"
-    dir="/home/jonas/gits/amneziawg-android/ui"
+    dir="/home/jonas/gits/amneziawg-go/amneziawg-android/ui"
     name=":ui"
     type="APP"
     maven="amneziawg-android:ui:"

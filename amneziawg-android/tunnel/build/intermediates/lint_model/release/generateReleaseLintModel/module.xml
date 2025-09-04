@@ -1,6 +1,6 @@
 <lint-module
     format="1"
-    dir="/home/jonas/gits/amneziawg-android/tunnel"
+    dir="/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel"
     name=":tunnel"
     type="LIBRARY"
     maven="amneziawg-android:tunnel:"

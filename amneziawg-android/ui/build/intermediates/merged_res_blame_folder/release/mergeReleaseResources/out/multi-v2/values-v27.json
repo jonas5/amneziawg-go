@@ -4,7 +4,7 @@
             "outputFile": "org.amnezia.awg.ui-mergeReleaseResources-47:/values-v27/values-v27.xml",
             "map": [
                 {
-                    "source": "/home/jonas/gits/amneziawg-android/ui/src/main/res/values-v27/styles.xml",
+                    "source": "/home/jonas/gits/amneziawg-go/amneziawg-android/ui/src/main/res/values-v27/styles.xml",
                     "from": {
                         "startLines": "3",
                         "startColumns": "4",

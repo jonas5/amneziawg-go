@@ -734,10 +734,10 @@
       provided="true"/>
   <library
       name=":@@:tunnel::release"
-      jars="/home/jonas/gits/amneziawg-android/tunnel/build/.transforms/d4aaebf5b559971afc73466461d32413/transformed/out/jars/classes.jar"
+      jars="/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/.transforms/d4aaebf5b559971afc73466461d32413/transformed/out/jars/classes.jar"
       resolved="amneziawg-android:tunnel:unspecified"
-      partialResultsDir="/home/jonas/gits/amneziawg-android/tunnel/build/intermediates/lint_vital_partial_results/release/lintVitalAnalyzeRelease/out"
-      folder="/home/jonas/gits/amneziawg-android/tunnel/build/.transforms/d4aaebf5b559971afc73466461d32413/transformed/out"
+      partialResultsDir="/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/intermediates/lint_vital_partial_results/release/lintVitalAnalyzeRelease/out"
+      folder="/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/build/.transforms/d4aaebf5b559971afc73466461d32413/transformed/out"
       manifest="AndroidManifest.xml"
       resFolder="res"
       assetsFolder="assets"

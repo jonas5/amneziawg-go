@@ -1,4 +1,4 @@
-# Install script for directory: /home/jonas/gits/amneziawg-android/tunnel/tools
+# Install script for directory: /home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/armeabi-v7a/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/armeabi-v7a/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -31285,6 +31285,8 @@ org.amnezia.awg.config.Interface$Builder:
 org.amnezia.awg.config.Interface:
     private static final int MAX_UDP_PORT
     private static final int MIN_UDP_PORT
+    public java.util.Optional getCookieReplyPacketJunkSize()
+    public java.util.Optional getTransportPacketJunkSize()
 org.amnezia.awg.config.Peer$Builder:
     private static final int MAX_PERSISTENT_KEEPALIVE
     public org.amnezia.awg.config.Peer$Builder addAllowedIps(java.util.Collection)
@@ -45028,6 +45030,8 @@ org.amnezia.awg.config.InetNetwork:
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$1$e3eeba753e6149475eecef21b99b3058531093a87bc39402bb1ae232a10d68ba$0
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$41b9fd5b4fb173e3a95b6a821f737fa6ecadd4a15cd2f4ef6041cb24c9297690$0
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$b034161c8ed7e6c1e3b670cb1296087b0652d23327623a480e2798712b9d584e$0
+org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$b034161c8ed7e6c1e3b670cb1296087b0652d23327623a480e2798712b9d584e$10
+org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$b034161c8ed7e6c1e3b670cb1296087b0652d23327623a480e2798712b9d584e$11
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$b034161c8ed7e6c1e3b670cb1296087b0652d23327623a480e2798712b9d584e$1
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$b034161c8ed7e6c1e3b670cb1296087b0652d23327623a480e2798712b9d584e$2
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$b034161c8ed7e6c1e3b670cb1296087b0652d23327623a480e2798712b9d584e$3
@@ -45040,6 +45044,8 @@ org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$b034161c8ed7e6c1e3b6
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$0
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$10
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$11
+org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$12
+org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$13
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$1
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$2
 org.amnezia.awg.config.Interface$$InternalSyntheticLambda$3$c91b308acce6de7f83ddb0eedd1b8fe366eaef275804749cb0b3c187bc0eea0b$3
@@ -45057,8 +45063,11 @@ org.amnezia.awg.config.Interface$Builder:
     public static org.amnezia.awg.config.Interface$Builder addDnsServer()
     public final void excludeApplications(androidx.databinding.ObservableList)
     public final void includeApplications(androidx.databinding.ObservableList)
+    public static org.amnezia.awg.config.Interface$Builder parseCookieReplyPacketJunkSize()
     public static org.amnezia.awg.config.Interface$Builder parseExcludedApplications()
     public static org.amnezia.awg.config.Interface$Builder parseIncludedApplications()
+    public static org.amnezia.awg.config.Interface$Builder parseTransportPacketJunkSize()
+    public static org.amnezia.awg.config.Interface$Builder setCookieReplyPacketJunkSize()
     public static org.amnezia.awg.config.Interface$Builder setInitPacketJunkSize()
     public static org.amnezia.awg.config.Interface$Builder setInitPacketMagicHeader()
     public static org.amnezia.awg.config.Interface$Builder setJunkPacketCount()
@@ -45069,6 +45078,7 @@ org.amnezia.awg.config.Interface$Builder:
     public static org.amnezia.awg.config.Interface$Builder setMtu()
     public static org.amnezia.awg.config.Interface$Builder setResponsePacketJunkSize()
     public static org.amnezia.awg.config.Interface$Builder setResponsePacketMagicHeader()
+    public static org.amnezia.awg.config.Interface$Builder setTransportPacketJunkSize()
     public static org.amnezia.awg.config.Interface$Builder setTransportPacketMagicHeader()
     public static org.amnezia.awg.config.Interface$Builder setUnderloadPacketMagicHeader()
 org.amnezia.awg.config.Interface-IA
@@ -45098,7 +45108,6 @@ org.amnezia.awg.config.ParseException:
 org.amnezia.awg.config.Peer$$InternalSyntheticLambda$3$0459d58e1e6a35cd1ff72d37399590a441ad6062e296185cf59693b74596e9a3$1
 org.amnezia.awg.config.Peer$$InternalSyntheticLambda$3$0459d58e1e6a35cd1ff72d37399590a441ad6062e296185cf59693b74596e9a3$2
 org.amnezia.awg.config.Peer$$InternalSyntheticLambda$3$3b57a09687d02fa72460b956b2943b887153a9977d003ee2867e966ce1b2d83e$0
-org.amnezia.awg.config.Peer$$InternalSyntheticLambda$3$fb89c9909e3dfd9aa45ccf70ce3f5876ac3edb38217afd4f1e58b4e3f67fecad$1
 org.amnezia.awg.config.Peer$$InternalSyntheticLambda$3$fb89c9909e3dfd9aa45ccf70ce3f5876ac3edb38217afd4f1e58b4e3f67fecad$2
 org.amnezia.awg.config.Peer$$InternalSyntheticLambda$3$fb89c9909e3dfd9aa45ccf70ce3f5876ac3edb38217afd4f1e58b4e3f67fecad$3
 org.amnezia.awg.config.Peer$Builder:

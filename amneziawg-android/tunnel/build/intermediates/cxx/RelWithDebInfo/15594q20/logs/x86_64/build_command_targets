@@ -1,6 +1,6 @@
 /usr/bin/ninja \
   -C \
-  /home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86_64 \
+  /home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86_64 \
   libwg-go.so \
   libwg-quick.so \
   libwg.so

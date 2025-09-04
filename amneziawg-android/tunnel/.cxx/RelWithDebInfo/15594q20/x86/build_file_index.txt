@@ -1,1 +1,1 @@
-/home/jonas/gits/amneziawg-android/tunnel/tools/CMakeLists.txt
+/home/jonas/gits/amneziawg-go/amneziawg-android/tunnel/tools/CMakeLists.txt

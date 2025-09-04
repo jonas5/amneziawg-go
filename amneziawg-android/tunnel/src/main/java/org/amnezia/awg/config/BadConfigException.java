@@ -84,6 +84,8 @@ public class BadConfigException extends Exception {
         JUNK_PACKET_MAX_SIZE("JunkPacketMaxSize"),
         INIT_PACKET_JUNK_SIZE("InitPacketJunkSize"),
         RESPONSE_PACKET_JUNK_SIZE("ResponsePacketJunkSize"),
+        COOKIE_REPLY_PACKET_JUNK_SIZE("CookieReplyPacketJunkSize"),
+        TRANSPORT_PACKET_JUNK_SIZE("TransportPacketJunkSize"),
         INIT_PACKET_MAGIC_HEADER("InitPacketMagicHeader"),
         RESPONSE_PACKET_MAGIC_HEADER("ResponsePacketMagicHeader"),
         UNDERLOAD_PACKET_MAGIC_HEADER("UnderloadPacketMagicHeader"),
