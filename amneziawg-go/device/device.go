@@ -602,6 +602,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 
 	isAwgOn := false
 	device.awg.Mux.Lock()
+	device.log.Verbosef("AWG: --- Parsing AmneziaWG config ---")
 	if tempAwg.Cfg.JunkPacketCount < 0 {
 		errs = append(errs, ipcErrorf(
 			ipc.IpcErrorInvalid,
@@ -610,11 +611,13 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 		)
 	}
 	device.awg.Cfg.JunkPacketCount = tempAwg.Cfg.JunkPacketCount
+	device.log.Verbosef("AWG: Jc = %d", device.awg.Cfg.JunkPacketCount)
 	if tempAwg.Cfg.JunkPacketCount != 0 {
 		isAwgOn = true
 	}
 
 	device.awg.Cfg.JunkPacketMinSize = tempAwg.Cfg.JunkPacketMinSize
+	device.log.Verbosef("AWG: Jmin = %d", device.awg.Cfg.JunkPacketMinSize)
 	if tempAwg.Cfg.JunkPacketMinSize != 0 {
 		isAwgOn = true
 	}
@@ -644,6 +647,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 	} else {
 		device.awg.Cfg.JunkPacketMaxSize = tempAwg.Cfg.JunkPacketMaxSize
 	}
+	device.log.Verbosef("AWG: Jmax = %d", device.awg.Cfg.JunkPacketMaxSize)
 
 	if tempAwg.Cfg.JunkPacketMaxSize != 0 {
 		isAwgOn = true
@@ -670,6 +674,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 		MessageInitiationType = DefaultMessageInitiationType
 		magicHeaders[0] = awg.NewMagicHeaderSameValue(DefaultMessageInitiationType)
 	}
+	device.log.Verbosef("AWG: H1 = %v", magicHeaders[0])
 
 	if tempAwg.Cfg.MagicHeaders.Values[1].Min > 4 {
 		isAwgOn = true
@@ -682,6 +687,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 		MessageResponseType = DefaultMessageResponseType
 		magicHeaders[1] = awg.NewMagicHeaderSameValue(DefaultMessageResponseType)
 	}
+	device.log.Verbosef("AWG: H2 = %v", magicHeaders[1])
 
 	if tempAwg.Cfg.MagicHeaders.Values[2].Min > 4 {
 		isAwgOn = true
@@ -694,6 +700,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 		MessageCookieReplyType = DefaultMessageCookieReplyType
 		magicHeaders[2] = awg.NewMagicHeaderSameValue(DefaultMessageCookieReplyType)
 	}
+	device.log.Verbosef("AWG: H3 = %v", magicHeaders[2])
 
 	if tempAwg.Cfg.MagicHeaders.Values[3].Min > 4 {
 		isAwgOn = true
@@ -706,6 +713,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 		MessageTransportType = DefaultMessageTransportType
 		magicHeaders[3] = awg.NewMagicHeaderSameValue(DefaultMessageTransportType)
 	}
+	device.log.Verbosef("AWG: H4 = %v", magicHeaders[3])
 
 	var err error
 	device.awg.Cfg.MagicHeaders, err = awg.NewMagicHeaders(magicHeaders)
@@ -746,6 +754,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 	} else {
 		device.awg.Cfg.InitHeaderJunkSize = tempAwg.Cfg.InitHeaderJunkSize
 	}
+	device.log.Verbosef("AWG: S1(init) = %d", device.awg.Cfg.InitHeaderJunkSize)
 
 	if tempAwg.Cfg.InitHeaderJunkSize != 0 {
 		isAwgOn = true
@@ -764,6 +773,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 	} else {
 		device.awg.Cfg.ResponseHeaderJunkSize = tempAwg.Cfg.ResponseHeaderJunkSize
 	}
+	device.log.Verbosef("AWG: S2(resp) = %d", device.awg.Cfg.ResponseHeaderJunkSize)
 
 	if tempAwg.Cfg.ResponseHeaderJunkSize != 0 {
 		isAwgOn = true
@@ -782,6 +792,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 	} else {
 		device.awg.Cfg.CookieReplyHeaderJunkSize = tempAwg.Cfg.CookieReplyHeaderJunkSize
 	}
+	device.log.Verbosef("AWG: S3(cookie) = %d", device.awg.Cfg.CookieReplyHeaderJunkSize)
 
 	if tempAwg.Cfg.CookieReplyHeaderJunkSize != 0 {
 		isAwgOn = true
@@ -800,6 +811,7 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 	} else {
 		device.awg.Cfg.TransportHeaderJunkSize = tempAwg.Cfg.TransportHeaderJunkSize
 	}
+	device.log.Verbosef("AWG: S4(transport) = %d", device.awg.Cfg.TransportHeaderJunkSize)
 
 	if tempAwg.Cfg.TransportHeaderJunkSize != 0 {
 		isAwgOn = true
@@ -902,6 +914,7 @@ func (device *Device) ProcessAWGPacket(size int, packet *[]byte, buffer *[MaxMes
 
 func (device *Device) getMsgType(packet *[]byte, junkSize int) (uint32, error) {
 	msgTypeValue := binary.LittleEndian.Uint32((*packet)[junkSize : junkSize+4])
+	device.log.Verbosef("AWG: Read magic number value: %d", msgTypeValue)
 	msgType, err := device.awg.GetMagicHeaderMinFor(msgTypeValue)
 
 	if err != nil {
@@ -912,6 +925,7 @@ func (device *Device) getMsgType(packet *[]byte, junkSize int) (uint32, error) {
 }
 
 func (device *Device) handleTransport(size int, packet *[]byte, buffer *[MaxMessageSize]byte) (uint32, error) {
+	device.log.Verbosef("AWG: Received transport packet data: %x", *packet)
 	junkSize := device.awg.Cfg.TransportHeaderJunkSize
 
 	msgType, err := device.getMsgType(packet, junkSize)

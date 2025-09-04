@@ -5,6 +5,7 @@
 
 package org.amnezia.awg.config;
 
+import android.util.Log;
 import org.amnezia.awg.config.BadConfigException.Location;
 import org.amnezia.awg.config.BadConfigException.Reason;
 import org.amnezia.awg.config.BadConfigException.Section;
@@ -90,6 +91,7 @@ public final class Interface {
      */
     public static Interface parse(final Iterable<? extends CharSequence> lines)
             throws BadConfigException {
+        Log.d("AmneziaWG", "--- Parsing Interface config ---");
         final Builder builder = new Builder();
         for (final CharSequence line : lines) {
             final Attribute attribute = Attribute.parse(line).orElseThrow(() ->
@@ -119,36 +121,47 @@ public final class Interface {
                     break;
                 case "jc":
                     builder.parseJunkPacketCount(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed Jc: " + attribute.getValue());
                     break;
                 case "jmin":
                     builder.parseJunkPacketMinSize(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed Jmin: " + attribute.getValue());
                     break;
                 case "jmax":
                     builder.parseJunkPacketMaxSize(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed Jmax: " + attribute.getValue());
                     break;
                 case "s1":
                     builder.parseInitPacketJunkSize(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed S1: " + attribute.getValue());
                     break;
                 case "s2":
                     builder.parseResponsePacketJunkSize(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed S2: " + attribute.getValue());
                     break;
                 case "s3":
                     builder.parseCookieReplyPacketJunkSize(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed S3: " + attribute.getValue());
                     break;
                 case "s4":
                     builder.parseTransportPacketJunkSize(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed S4: " + attribute.getValue());
                     break;
                 case "h1":
                     builder.parseInitPacketMagicHeader(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed H1: " + attribute.getValue());
                     break;
                 case "h2":
                     builder.parseResponsePacketMagicHeader(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed H2: " + attribute.getValue());
                     break;
                 case "h3":
                     builder.parseUnderloadPacketMagicHeader(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed H3: " + attribute.getValue());
                     break;
                 case "h4":
                     builder.parseTransportPacketMagicHeader(attribute.getValue());
+                    Log.d("AmneziaWG", "Parsed H4: " + attribute.getValue());
                     break;
                 default:
                     throw new BadConfigException(Section.INTERFACE, Location.TOP_LEVEL,
@@ -457,7 +470,9 @@ public final class Interface {
         responsePacketMagicHeader.ifPresent(h2 -> sb.append("h2=").append(h2).append('\n'));
         underloadPacketMagicHeader.ifPresent(h3 -> sb.append("h3=").append(h3).append('\n'));
         transportPacketMagicHeader.ifPresent(h4 -> sb.append("h4=").append(h4).append('\n'));
-        return sb.toString();
+        final String userspaceString = sb.toString();
+        Log.d("AmneziaWG", "Userspace config:\n" + userspaceString);
+        return userspaceString;
     }
 
     @SuppressWarnings("UnusedReturnValue")

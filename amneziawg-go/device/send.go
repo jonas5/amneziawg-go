@@ -545,6 +545,7 @@ func (device *Device) RoutineEncryption(id int) {
 				}
 			}
 
+			device.log.Verbosef("AWG: Sending transport packet with magic number: %d", msgType)
 			binary.LittleEndian.PutUint32(fieldType, msgType)
 			binary.LittleEndian.PutUint32(fieldReceiver, elem.keypair.remoteIndex)
 			binary.LittleEndian.PutUint64(fieldNonce, elem.nonce)
