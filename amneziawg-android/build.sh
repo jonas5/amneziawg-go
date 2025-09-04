@@ -7,7 +7,7 @@ export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
 
-source ~/.bashrc
+# source ~/.bashrc
 
 # === PRE-FLIGHT CHECK ===
 JAVA_VERSION=$(java -version 2>&1 | awk -F[\".] '/version/ {print $2}')
@@ -22,9 +22,9 @@ echo "✅ Java version 17 detected. Proceeding..."
 
 
 ./gradlew --stop
-./gradlew clean
+./gradlew clean -Pandroid.sdk.dir=$ANDROID_HOME
 rm -rf ~/.gradle/caches/
-./gradlew assembleRelease --stacktrace --no-daemon
+./gradlew assembleRelease --stacktrace --no-daemon -Pandroid.sdk.dir=$ANDROID_HOME
 
 
 status=$?

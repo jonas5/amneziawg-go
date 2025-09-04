@@ -51,6 +51,8 @@ public final class Interface {
     private final Optional<Integer> junkPacketMaxSize;
     private final Optional<Integer> initPacketJunkSize;
     private final Optional<Integer> responsePacketJunkSize;
+    private final Optional<Integer> cookieReplyPacketJunkSize;
+    private final Optional<Integer> transportPacketJunkSize;
     private final Optional<Long> initPacketMagicHeader;
     private final Optional<Long> responsePacketMagicHeader;
     private final Optional<Long> underloadPacketMagicHeader;
@@ -71,6 +73,8 @@ public final class Interface {
         junkPacketMaxSize = builder.junkPacketMaxSize;
         initPacketJunkSize = builder.initPacketJunkSize;
         responsePacketJunkSize = builder.responsePacketJunkSize;
+        cookieReplyPacketJunkSize = builder.cookieReplyPacketJunkSize;
+        transportPacketJunkSize = builder.transportPacketJunkSize;
         initPacketMagicHeader = builder.initPacketMagicHeader;
         responsePacketMagicHeader = builder.responsePacketMagicHeader;
         underloadPacketMagicHeader = builder.underloadPacketMagicHeader;
@@ -128,6 +132,12 @@ public final class Interface {
                 case "s2":
                     builder.parseResponsePacketJunkSize(attribute.getValue());
                     break;
+                case "s3":
+                    builder.parseCookieReplyPacketJunkSize(attribute.getValue());
+                    break;
+                case "s4":
+                    builder.parseTransportPacketJunkSize(attribute.getValue());
+                    break;
                 case "h1":
                     builder.parseInitPacketMagicHeader(attribute.getValue());
                     break;
@@ -166,6 +176,8 @@ public final class Interface {
                 && junkPacketMaxSize.equals(other.junkPacketMaxSize)
                 && initPacketJunkSize.equals(other.initPacketJunkSize)
                 && responsePacketJunkSize.equals(other.responsePacketJunkSize)
+                && cookieReplyPacketJunkSize.equals(other.cookieReplyPacketJunkSize)
+                && transportPacketJunkSize.equals(other.transportPacketJunkSize)
                 && initPacketMagicHeader.equals(other.initPacketMagicHeader)
                 && responsePacketMagicHeader.equals(other.responsePacketMagicHeader)
                 && underloadPacketMagicHeader.equals(other.underloadPacketMagicHeader)
@@ -295,6 +307,24 @@ public final class Interface {
     }
 
     /**
+     * Returns the cookieReplyPacketJunkSize used for the AmneziaWG interface.
+     *
+     * @return the cookieReplyPacketJunkSize, or {@code Optional.empty()} if none is configured
+     */
+    public Optional<Integer> getCookieReplyPacketJunkSize() {
+        return cookieReplyPacketJunkSize;
+    }
+
+    /**
+     * Returns the transportPacketJunkSize used for the AmneziaWG interface.
+     *
+     * @return the transportPacketJunkSize, or {@code Optional.empty()} if none is configured
+     */
+    public Optional<Integer> getTransportPacketJunkSize() {
+        return transportPacketJunkSize;
+    }
+
+    /**
      * Returns the initPacketMagicHeader used for the AmneziaWG interface.
      *
      * @return the initPacketMagicHeader, or {@code Optional.empty()} if none is configured
@@ -346,6 +376,8 @@ public final class Interface {
         hash = 31 * hash + junkPacketMaxSize.hashCode();
         hash = 31 * hash + initPacketJunkSize.hashCode();
         hash = 31 * hash + responsePacketJunkSize.hashCode();
+        hash = 31 * hash + cookieReplyPacketJunkSize.hashCode();
+        hash = 31 * hash + transportPacketJunkSize.hashCode();
         hash = 31 * hash + initPacketMagicHeader.hashCode();
         hash = 31 * hash + responsePacketMagicHeader.hashCode();
         hash = 31 * hash + underloadPacketMagicHeader.hashCode();
@@ -394,6 +426,8 @@ public final class Interface {
         junkPacketMaxSize.ifPresent(jmax -> sb.append("Jmax = ").append(jmax).append('\n'));
         initPacketJunkSize.ifPresent(s1 -> sb.append("S1 = ").append(s1).append('\n'));
         responsePacketJunkSize.ifPresent(s2 -> sb.append("S2 = ").append(s2).append('\n'));
+        cookieReplyPacketJunkSize.ifPresent(s3 -> sb.append("S3 = ").append(s3).append('\n'));
+        transportPacketJunkSize.ifPresent(s4 -> sb.append("S4 = ").append(s4).append('\n'));
         initPacketMagicHeader.ifPresent(h1 -> sb.append("H1 = ").append(h1).append('\n'));
         responsePacketMagicHeader.ifPresent(h2 -> sb.append("H2 = ").append(h2).append('\n'));
         underloadPacketMagicHeader.ifPresent(h3 -> sb.append("H3 = ").append(h3).append('\n'));
@@ -417,6 +451,8 @@ public final class Interface {
         junkPacketMaxSize.ifPresent(jmax -> sb.append("jmax=").append(jmax).append('\n'));
         initPacketJunkSize.ifPresent(s1 -> sb.append("s1=").append(s1).append('\n'));
         responsePacketJunkSize.ifPresent(s2 -> sb.append("s2=").append(s2).append('\n'));
+        cookieReplyPacketJunkSize.ifPresent(s3 -> sb.append("s3=").append(s3).append('\n'));
+        transportPacketJunkSize.ifPresent(s4 -> sb.append("s4=").append(s4).append('\n'));
         initPacketMagicHeader.ifPresent(h1 -> sb.append("h1=").append(h1).append('\n'));
         responsePacketMagicHeader.ifPresent(h2 -> sb.append("h2=").append(h2).append('\n'));
         underloadPacketMagicHeader.ifPresent(h3 -> sb.append("h3=").append(h3).append('\n'));
@@ -452,6 +488,10 @@ public final class Interface {
         private Optional<Integer> initPacketJunkSize = Optional.empty();
         // Defaults to not present.
         private Optional<Integer> responsePacketJunkSize = Optional.empty();
+        // Defaults to not present.
+        private Optional<Integer> cookieReplyPacketJunkSize = Optional.empty();
+        // Defaults to not present.
+        private Optional<Integer> transportPacketJunkSize = Optional.empty();
         // Defaults to not present.
         private Optional<Long> initPacketMagicHeader = Optional.empty();
         // Defaults to not present.
@@ -613,6 +653,22 @@ public final class Interface {
             }
         }
 
+        public Builder parseCookieReplyPacketJunkSize(final String cookieReplyPacketJunkSize) throws BadConfigException {
+            try {
+                return setCookieReplyPacketJunkSize(Integer.parseInt(cookieReplyPacketJunkSize));
+            } catch (final NumberFormatException e) {
+                throw new BadConfigException(Section.INTERFACE, Location.COOKIE_REPLY_PACKET_JUNK_SIZE, cookieReplyPacketJunkSize, e);
+            }
+        }
+
+        public Builder parseTransportPacketJunkSize(final String transportPacketJunkSize) throws BadConfigException {
+            try {
+                return setTransportPacketJunkSize(Integer.parseInt(transportPacketJunkSize));
+            } catch (final NumberFormatException e) {
+                throw new BadConfigException(Section.INTERFACE, Location.TRANSPORT_PACKET_JUNK_SIZE, transportPacketJunkSize, e);
+            }
+        }
+
         public Builder parseInitPacketMagicHeader(final String initPacketMagicHeader) throws BadConfigException {
             try {
                 return setInitPacketMagicHeader(Long.parseLong(initPacketMagicHeader));
@@ -712,6 +768,22 @@ public final class Interface {
                 throw new BadConfigException(Section.INTERFACE, Location.RESPONSE_PACKET_JUNK_SIZE,
                         Reason.INVALID_VALUE, String.valueOf(responsePacketJunkSize));
             this.responsePacketJunkSize = responsePacketJunkSize == 0 ? Optional.empty() : Optional.of(responsePacketJunkSize);
+            return this;
+        }
+
+        public Builder setCookieReplyPacketJunkSize(final int cookieReplyPacketJunkSize) throws BadConfigException {
+            if (cookieReplyPacketJunkSize < 0)
+                throw new BadConfigException(Section.INTERFACE, Location.COOKIE_REPLY_PACKET_JUNK_SIZE,
+                        Reason.INVALID_VALUE, String.valueOf(cookieReplyPacketJunkSize));
+            this.cookieReplyPacketJunkSize = cookieReplyPacketJunkSize == 0 ? Optional.empty() : Optional.of(cookieReplyPacketJunkSize);
+            return this;
+        }
+
+        public Builder setTransportPacketJunkSize(final int transportPacketJunkSize) throws BadConfigException {
+            if (transportPacketJunkSize < 0)
+                throw new BadConfigException(Section.INTERFACE, Location.TRANSPORT_PACKET_JUNK_SIZE,
+                        Reason.INVALID_VALUE, String.valueOf(transportPacketJunkSize));
+            this.transportPacketJunkSize = transportPacketJunkSize == 0 ? Optional.empty() : Optional.of(transportPacketJunkSize);
             return this;
         }
 
