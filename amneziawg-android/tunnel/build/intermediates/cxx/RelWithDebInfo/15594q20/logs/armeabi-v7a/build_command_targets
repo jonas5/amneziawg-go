@@ -1,0 +1,6 @@
+/usr/bin/ninja \
+  -C \
+  /home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/armeabi-v7a \
+  libwg-go.so \
+  libwg-quick.so \
+  libwg.so

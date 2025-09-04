@@ -1,0 +1,4 @@
+/home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86/CMakeFiles/elf-cleaner
+/home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86/CMakeFiles/elf-cleaner.rule
+/home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86/CMakeFiles/libwg-go.so
+/home/jonas/gits/amneziawg-android/tunnel/.cxx/RelWithDebInfo/15594q20/x86/CMakeFiles/libwg-go.so.rule

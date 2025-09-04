@@ -1,0 +1,1 @@
+/home/jonas/gits/amneziawg-android/tunnel/build/intermediates/cxx/RelWithDebInfo/15594q20/obj/x86
