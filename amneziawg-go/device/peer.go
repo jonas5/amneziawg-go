@@ -32,6 +32,10 @@ type Peer struct {
 		clearSrcOnTx   bool // signal to val.ClearSrc() prior to next packet transmission
 		disableRoaming bool
 	}
+	udpEndpoint struct {
+		sync.Mutex
+		val conn.Endpoint
+	}
 
 	timers struct {
 		retransmitHandshake     *Timer
@@ -57,6 +61,7 @@ type Peer struct {
 	cookieGenerator             CookieGenerator
 	trieEntries                 list.List
 	persistentKeepaliveInterval atomic.Uint32
+	tcpWrapper                  string
 }
 
 func (device *Device) NewPeer(pk NoisePublicKey) (*Peer, error) {
@@ -295,6 +300,12 @@ func (peer *Peer) SetEndpointFromPacket(endpoint conn.Endpoint) {
 	}
 	peer.endpoint.clearSrcOnTx = false
 	peer.endpoint.val = endpoint
+}
+
+func (peer *Peer) SetUdpEndpoint(endpoint conn.Endpoint) {
+	peer.udpEndpoint.Lock()
+	defer peer.udpEndpoint.Unlock()
+	peer.udpEndpoint.val = endpoint
 }
 
 func (peer *Peer) markEndpointSrcForClearing() {

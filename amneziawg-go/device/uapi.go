@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/amnezia-vpn/amneziawg-go/conn"
 	"github.com/amnezia-vpn/amneziawg-go/device/awg"
 	"github.com/amnezia-vpn/amneziawg-go/ipc"
 )
@@ -415,10 +416,12 @@ func (device *Device) handleDeviceLine(key, value string, tempAwg *awg.Protocol)
 
 // An ipcSetPeer is the current state of an IPC set operation on a peer.
 type ipcSetPeer struct {
-	*Peer        // Peer is the current peer being operated on
-	dummy   bool // dummy reports whether this peer is a temporary, placeholder peer
-	created bool // new reports whether this is a newly created peer
-	pkaOn   bool // pkaOn reports whether the peer had the persistent keepalive turn on
+	*Peer          // Peer is the current peer being operated on
+	dummy     bool   // dummy reports whether this peer is a temporary, placeholder peer
+	created   bool   // new reports whether this is a newly created peer
+	pkaOn     bool   // pkaOn reports whether the peer had the persistent keepalive turn on
+	tcpWrapper  string
+	udpEndpoint conn.Endpoint
 }
 
 func (peer *ipcSetPeer) handlePostConfig() {
@@ -427,6 +430,18 @@ func (peer *ipcSetPeer) handlePostConfig() {
 	}
 	if peer.created {
 		peer.endpoint.disableRoaming = peer.device.net.brokenRoaming && peer.endpoint.val != nil
+	}
+	if peer.udpEndpoint != nil {
+		peer.Peer.SetUdpEndpoint(peer.udpEndpoint)
+	}
+	if peer.tcpWrapper != "" {
+		peer.Peer.tcpWrapper = peer.tcpWrapper
+		newBind, err := conn.NewXrayBind(peer.tcpWrapper)
+		if err != nil {
+			peer.device.log.Errorf("Failed to create Xray bind: %v", err)
+			return
+		}
+		peer.device.net.bind = newBind
 	}
 	if peer.device.isUp() {
 		peer.Start()
@@ -475,6 +490,16 @@ func (device *Device) handlePeerLine(
 	key, value string,
 ) error {
 	switch key {
+	case "tcp_wrapper":
+		device.log.Verbosef("%v - UAPI: Updating tcp_wrapper", peer.Peer)
+		peer.tcpWrapper = value
+	case "endpoint":
+		device.log.Verbosef("%v - UAPI: Updating endpoint", peer.Peer)
+		endpoint, err := device.net.bind.ParseEndpoint(value)
+		if err != nil {
+			return ipcErrorf(ipc.IpcErrorInvalid, "failed to set endpoint %v: %w", value, err)
+		}
+		peer.udpEndpoint = endpoint
 	case "update_only":
 		// allow disabling of creation
 		if value != "true" {
@@ -513,15 +538,6 @@ func (device *Device) handlePeerLine(
 			return ipcErrorf(ipc.IpcErrorInvalid, "failed to set preshared key: %w", err)
 		}
 
-	case "endpoint":
-		device.log.Verbosef("%v - UAPI: Updating endpoint", peer.Peer)
-		endpoint, err := device.net.bind.ParseEndpoint(value)
-		if err != nil {
-			return ipcErrorf(ipc.IpcErrorInvalid, "failed to set endpoint %v: %w", value, err)
-		}
-		peer.endpoint.Lock()
-		defer peer.endpoint.Unlock()
-		peer.endpoint.val = endpoint
 
 	case "persistent_keepalive_interval":
 		device.log.Verbosef("%v - UAPI: Updating persistent keepalive interval", peer.Peer)

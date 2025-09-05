@@ -35,6 +35,7 @@ public final class Peer {
     private final Optional<Integer> persistentKeepalive;
     private final Optional<Key> preSharedKey;
     private final Key publicKey;
+    private final Optional<String> tcpWrapper;
 
     private Peer(final Builder builder) {
         // Defensively copy to ensure immutability even if the Builder is reused.
@@ -43,6 +44,7 @@ public final class Peer {
         persistentKeepalive = builder.persistentKeepalive;
         preSharedKey = builder.preSharedKey;
         publicKey = Objects.requireNonNull(builder.publicKey, "Peers must have a public key");
+        tcpWrapper = builder.tcpWrapper;
     }
 
     /**
@@ -74,6 +76,9 @@ public final class Peer {
                     break;
                 case "publickey":
                     builder.parsePublicKey(attribute.getValue());
+                    break;
+                case "tcpwrapper":
+                    builder.parseTcpWrapper(attribute.getValue());
                     break;
                 default:
                     throw new BadConfigException(Section.PEER, Location.TOP_LEVEL,
@@ -199,6 +204,7 @@ public final class Peer {
         endpoint.flatMap(InetEndpoint::getResolved).ifPresent(ep -> sb.append("endpoint=").append(ep).append('\n'));
         persistentKeepalive.ifPresent(pk -> sb.append("persistent_keepalive_interval=").append(pk).append('\n'));
         preSharedKey.ifPresent(psk -> sb.append("preshared_key=").append(psk.toHex()).append('\n'));
+        tcpWrapper.ifPresent(wrapper -> sb.append("tcp_wrapper=").append(wrapper).append('\n'));
         return sb.toString();
     }
 
@@ -217,6 +223,8 @@ public final class Peer {
         private Optional<Key> preSharedKey = Optional.empty();
         // No default; must be provided before building.
         @Nullable private Key publicKey;
+        // Defaults to not present.
+        private Optional<String> tcpWrapper = Optional.empty();
 
         public Builder addAllowedIp(final InetNetwork allowedIp) {
             allowedIps.add(allowedIp);
@@ -279,6 +287,10 @@ public final class Peer {
             }
         }
 
+        public Builder parseTcpWrapper(final String tcpWrapper) {
+            return setTcpWrapper(tcpWrapper);
+        }
+
         public Builder setEndpoint(final InetEndpoint endpoint) {
             this.endpoint = Optional.of(endpoint);
             return this;
@@ -301,6 +313,11 @@ public final class Peer {
 
         public Builder setPublicKey(final Key publicKey) {
             this.publicKey = publicKey;
+            return this;
+        }
+
+        public Builder setTcpWrapper(final String tcpWrapper) {
+            this.tcpWrapper = Optional.of(tcpWrapper);
             return this;
         }
     }

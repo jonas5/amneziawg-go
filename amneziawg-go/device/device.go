@@ -533,7 +533,24 @@ func (device *Device) BindUpdate() error {
 	var recvFns []conn.ReceiveFunc
 	netc := &device.net
 
-	recvFns, netc.port, err = netc.bind.Open(netc.port)
+	// Try UDP first
+	if device.hasUdpEndpoint() {
+		recvFns, netc.port, err = conn.NewStdNetBind().Open(netc.port)
+	}
+
+	// If UDP fails or is not available, try TCP
+	if err != nil || recvFns == nil {
+		if device.hasTcpWrapper() {
+			device.log.Verbosef("UDP connection failed, falling back to TCP")
+			var tcpBind conn.Bind
+			tcpBind, err = conn.NewXrayBind(device.getTcpWrapper())
+			if err == nil {
+				netc.bind = tcpBind
+				recvFns, netc.port, err = netc.bind.Open(netc.port)
+			}
+		}
+	}
+
 	if err != nil {
 		netc.port = 0
 		return err
@@ -579,6 +596,33 @@ func (device *Device) BindClose() error {
 	err := closeBindLocked(device)
 	device.net.Unlock()
 	return err
+}
+
+func (device *Device) hasUdpEndpoint() bool {
+	for _, peer := range device.peers.keyMap {
+		if peer.udpEndpoint.val != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (device *Device) hasTcpWrapper() bool {
+	for _, peer := range device.peers.keyMap {
+		if peer.tcpWrapper != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func (device *Device) getTcpWrapper() string {
+	for _, peer := range device.peers.keyMap {
+		if peer.tcpWrapper != "" {
+			return peer.tcpWrapper
+		}
+	}
+	return ""
 }
 
 func (device *Device) isAWG() bool {

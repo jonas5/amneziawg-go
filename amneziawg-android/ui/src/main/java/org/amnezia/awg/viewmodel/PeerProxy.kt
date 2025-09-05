@@ -62,6 +62,13 @@ class PeerProxy : BaseObservable, Parcelable {
         }
 
     @get:Bindable
+    var tcpWrapper: String = ""
+        set(value) {
+            field = value
+            notifyPropertyChanged(BR.tcpWrapper)
+        }
+
+    @get:Bindable
     val isAbleToExcludePrivateIps: Boolean
         get() = allowedIpsState == AllowedIpsState.CONTAINS_IPV4_PUBLIC_NETWORKS || allowedIpsState == AllowedIpsState.CONTAINS_IPV4_WILDCARD
 
@@ -75,6 +82,7 @@ class PeerProxy : BaseObservable, Parcelable {
         persistentKeepalive = parcel.readString() ?: ""
         preSharedKey = parcel.readString() ?: ""
         publicKey = parcel.readString() ?: ""
+        tcpWrapper = parcel.readString() ?: ""
     }
 
     constructor(other: Peer) {
@@ -83,6 +91,7 @@ class PeerProxy : BaseObservable, Parcelable {
         persistentKeepalive = other.persistentKeepalive.map { it.toString() }.orElse("")
         preSharedKey = other.preSharedKey.map { it.toBase64() }.orElse("")
         publicKey = other.publicKey.toBase64()
+        tcpWrapper = other.tcpWrapper.orElse("")
     }
 
     constructor()
@@ -165,6 +174,7 @@ class PeerProxy : BaseObservable, Parcelable {
         if (persistentKeepalive.isNotEmpty()) builder.parsePersistentKeepalive(persistentKeepalive)
         if (preSharedKey.isNotEmpty()) builder.parsePreSharedKey(preSharedKey)
         if (publicKey.isNotEmpty()) builder.parsePublicKey(publicKey)
+        if (tcpWrapper.isNotEmpty()) builder.parseTcpWrapper(tcpWrapper)
         return builder.build()
     }
 
@@ -206,6 +216,7 @@ class PeerProxy : BaseObservable, Parcelable {
         dest.writeString(persistentKeepalive)
         dest.writeString(preSharedKey)
         dest.writeString(publicKey)
+        dest.writeString(tcpWrapper)
     }
 
     private enum class AllowedIpsState {
