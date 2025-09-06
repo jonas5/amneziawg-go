@@ -7,4 +7,6 @@
 
 package conn
 
-func NewDefaultBind() Bind { return NewStdNetBind() }
+import "github.com/amnezia-vpn/amneziawg-go/logger"
+
+func NewDefaultBind() Bind { return NewStdNetBind(nil, logger.NewLogger(logger.LogLevelError, "")) }
