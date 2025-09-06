@@ -273,7 +273,7 @@ func (device *Device) handleDeviceLine(key, value string, tempAwg *awg.Protocol)
 		device.net.port = uint16(port)
 		device.net.Unlock()
 
-		if err := device.BindUpdate(); err != nil {
+		if err := device.BindUpdate(nil); err != nil {
 			return ipcErrorf(ipc.IpcErrorPortInUse, "failed to set listen_port: %w", err)
 		}
 
