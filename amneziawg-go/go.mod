@@ -21,3 +21,9 @@ require (
 	golang.org/x/time v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/amnezia-vpn/amnezia-xray-core => ../amnezia-xray-core
+
+require (
+	github.com/amnezia-vpn/amnezia-xray-core v0.0.0
+)
