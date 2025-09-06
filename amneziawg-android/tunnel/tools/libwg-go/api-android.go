@@ -73,7 +73,7 @@ func init() {
 }
 
 //export awgTurnOn
-func awgTurnOn(interfaceName string, tunFd int32, settings string) int32 {
+func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig string) int32 {
 	tag := cstring("AmneziaWG/" + interfaceName)
 	logger := &device.Logger{
 		Verbosef: AndroidLogger{level: C.ANDROID_LOG_DEBUG, tag: tag}.Printf,
@@ -90,7 +90,7 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string) int32 {
 	logger.Verbosef("Attaching to interface %v", name)
 	device := device.NewDevice(tun, conn.NewStdNetBind(), logger)
 
-	err = device.IpcSet(settings)
+	err = device.IpcSet(settings + "\nxray_config=" + xrayConfig)
 	if err != nil {
 		unix.Close(int(tunFd))
 		logger.Errorf("IpcSet: %v", err)

@@ -57,6 +57,7 @@ public final class Interface {
     private final Optional<Long> responsePacketMagicHeader;
     private final Optional<Long> underloadPacketMagicHeader;
     private final Optional<Long> transportPacketMagicHeader;
+    private final XrayProtocol xrayProtocol;
 
     private Interface(final Builder builder) {
         // Defensively copy to ensure immutability even if the Builder is reused.
@@ -79,6 +80,7 @@ public final class Interface {
         responsePacketMagicHeader = builder.responsePacketMagicHeader;
         underloadPacketMagicHeader = builder.underloadPacketMagicHeader;
         transportPacketMagicHeader = builder.transportPacketMagicHeader;
+        xrayProtocol = builder.xrayProtocol;
     }
 
     /**
@@ -96,6 +98,9 @@ public final class Interface {
                     new BadConfigException(Section.INTERFACE, Location.TOP_LEVEL,
                             Reason.SYNTAX_ERROR, line));
             switch (attribute.getKey().toLowerCase(Locale.ENGLISH)) {
+                case "xrayprotocol":
+                    builder.parseXrayProtocol(attribute.getValue());
+                    break;
                 case "address":
                     builder.parseAddresses(attribute.getValue());
                     break;
@@ -181,7 +186,8 @@ public final class Interface {
                 && initPacketMagicHeader.equals(other.initPacketMagicHeader)
                 && responsePacketMagicHeader.equals(other.responsePacketMagicHeader)
                 && underloadPacketMagicHeader.equals(other.underloadPacketMagicHeader)
-                && transportPacketMagicHeader.equals(other.transportPacketMagicHeader);
+                && transportPacketMagicHeader.equals(other.transportPacketMagicHeader)
+                && xrayProtocol.equals(other.xrayProtocol);
     }
 
     /**
@@ -360,6 +366,10 @@ public final class Interface {
         return transportPacketMagicHeader;
     }
 
+    public XrayProtocol getXrayProtocol() {
+        return xrayProtocol;
+    }
+
 
     @Override
     public int hashCode() {
@@ -382,6 +392,7 @@ public final class Interface {
         hash = 31 * hash + responsePacketMagicHeader.hashCode();
         hash = 31 * hash + underloadPacketMagicHeader.hashCode();
         hash = 31 * hash + transportPacketMagicHeader.hashCode();
+        hash = 31 * hash + xrayProtocol.hashCode();
         return hash;
     }
 
@@ -432,6 +443,7 @@ public final class Interface {
         responsePacketMagicHeader.ifPresent(h2 -> sb.append("H2 = ").append(h2).append('\n'));
         underloadPacketMagicHeader.ifPresent(h3 -> sb.append("H3 = ").append(h3).append('\n'));
         transportPacketMagicHeader.ifPresent(h4 -> sb.append("H4 = ").append(h4).append('\n'));
+        sb.append("XrayProtocol = ").append(xrayProtocol.name()).append('\n');
         sb.append("PrivateKey = ").append(keyPair.getPrivateKey().toBase64()).append('\n');
         return sb.toString();
     }
@@ -457,6 +469,7 @@ public final class Interface {
         responsePacketMagicHeader.ifPresent(h2 -> sb.append("h2=").append(h2).append('\n'));
         underloadPacketMagicHeader.ifPresent(h3 -> sb.append("h3=").append(h3).append('\n'));
         transportPacketMagicHeader.ifPresent(h4 -> sb.append("h4=").append(h4).append('\n'));
+        sb.append("xray_protocol=").append(xrayProtocol.name()).append('\n');
         return sb.toString();
     }
 
@@ -500,6 +513,7 @@ public final class Interface {
         private Optional<Long> underloadPacketMagicHeader = Optional.empty();
         // Defaults to not present.
         private Optional<Long> transportPacketMagicHeader = Optional.empty();
+        private XrayProtocol xrayProtocol = XrayProtocol.AUTO;
 
 
         public Builder addAddress(final InetNetwork address) {
@@ -710,6 +724,10 @@ public final class Interface {
             }
         }
 
+        public Builder parseXrayProtocol(final String protocol) {
+            return setXrayProtocol(XrayProtocol.newInstance(protocol));
+        }
+
         public Builder setKeyPair(final KeyPair keyPair) {
             this.keyPair = keyPair;
             return this;
@@ -816,6 +834,11 @@ public final class Interface {
                 throw new BadConfigException(Section.INTERFACE, Location.TRANSPORT_PACKET_MAGIC_HEADER,
                         Reason.INVALID_VALUE, String.valueOf(transportPacketMagicHeader));
             this.transportPacketMagicHeader = transportPacketMagicHeader == 0 ? Optional.empty() : Optional.of(transportPacketMagicHeader);
+            return this;
+        }
+
+        public Builder setXrayProtocol(final XrayProtocol protocol) {
+            xrayProtocol = protocol;
             return this;
         }
     }

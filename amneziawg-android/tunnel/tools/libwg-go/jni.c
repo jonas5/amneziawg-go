@@ -8,28 +8,34 @@
 #include <string.h>
 
 struct go_string { const char *str; long n; };
-extern int awgTurnOn(struct go_string ifname, int tun_fd, struct go_string settings);
+extern int awgTurnOn(struct go_string ifname, int tun_fd, struct go_string settings, struct go_string xray_config);
 extern void awgTurnOff(int handle);
 extern int awgGetSocketV4(int handle);
 extern int awgGetSocketV6(int handle);
 extern char *awgGetConfig(int handle);
 extern char *awgVersion();
 
-JNIEXPORT jint JNICALL Java_org_amnezia_awg_GoBackend_awgTurnOn(JNIEnv *env, jclass c, jstring ifname, jint tun_fd, jstring settings)
+JNIEXPORT jint JNICALL Java_org_amnezia_awg_GoBackend_awgTurnOn(JNIEnv *env, jclass c, jstring ifname, jint tun_fd, jstring settings, jstring xray_config)
 {
 	const char *ifname_str = (*env)->GetStringUTFChars(env, ifname, 0);
 	size_t ifname_len = (*env)->GetStringUTFLength(env, ifname);
 	const char *settings_str = (*env)->GetStringUTFChars(env, settings, 0);
 	size_t settings_len = (*env)->GetStringUTFLength(env, settings);
+	const char *xray_config_str = (*env)->GetStringUTFChars(env, xray_config, 0);
+	size_t xray_config_len = (*env)->GetStringUTFLength(env, xray_config);
 	int ret = awgTurnOn((struct go_string){
 		.str = ifname_str,
 		.n = ifname_len
 	}, tun_fd, (struct go_string){
 		.str = settings_str,
 		.n = settings_len
+	}, (struct go_string){
+		.str = xray_config_str,
+		.n = xray_config_len
 	});
 	(*env)->ReleaseStringUTFChars(env, ifname, ifname_str);
 	(*env)->ReleaseStringUTFChars(env, settings, settings_str);
+	(*env)->ReleaseStringUTFChars(env, xray_config, xray_config_str);
 	return ret;
 }
 

@@ -8,6 +8,8 @@ package org.amnezia.awg.backend;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.system.OsConstants;
 import android.util.Log;
@@ -17,14 +19,18 @@ import org.amnezia.awg.backend.Tunnel.State;
 import org.amnezia.awg.util.SharedLibraryLoader;
 import org.amnezia.awg.config.Config;
 import org.amnezia.awg.config.InetEndpoint;
+import org.amnezia.awg.Xray;
 import org.amnezia.awg.config.InetNetwork;
+import org.amnezia.awg.config.Interface;
 import org.amnezia.awg.config.Peer;
+import org.amnezia.awg.config.XrayProtocol;
 import org.amnezia.awg.crypto.Key;
 import org.amnezia.awg.crypto.KeyFormatException;
 import org.amnezia.awg.util.NonNullForAll;
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -51,6 +57,7 @@ public final class GoBackend implements Backend {
     @Nullable private Config currentConfig;
     @Nullable private Tunnel currentTunnel;
     private int currentTunnelHandle = -1;
+    private final Handler handshakeChecker = new Handler(Looper.getMainLooper());
 
     /**
      * Public constructor for GoBackend.
@@ -314,7 +321,8 @@ public final class GoBackend implements Backend {
                 if (tun == null)
                     throw new BackendException(Reason.TUN_CREATION_ERROR);
                 Log.d(TAG, "Go backend " + awgVersion());
-                currentTunnelHandle = awgTurnOn(tunnel.getName(), tun.detachFd(), goConfig);
+                final String xrayConfig = Xray.generate(config);
+                currentTunnelHandle = awgTurnOn(tunnel.getName(), tun.detachFd(), goConfig, xrayConfig);
             }
             if (currentTunnelHandle < 0)
                 throw new BackendException(Reason.GO_ACTIVATION_ERROR_CODE, currentTunnelHandle);
@@ -324,6 +332,18 @@ public final class GoBackend implements Backend {
 
             service.protect(awgGetSocketV4(currentTunnelHandle));
             service.protect(awgGetSocketV6(currentTunnelHandle));
+
+            final Tunnel savedTunnel = tunnel;
+            final Config savedConfig = config;
+            if (config.getInterface().getXrayProtocol() == XrayProtocol.AUTO) {
+                handshakeChecker.postDelayed(() -> {
+                    try {
+                        checkHandshakes(savedTunnel, savedConfig);
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                    }
+                }, 5000);
+            }
         } else {
             if (currentTunnelHandle == -1) {
                 Log.w(TAG, "Tunnel already down");
@@ -333,6 +353,7 @@ public final class GoBackend implements Backend {
             currentTunnel = null;
             currentTunnelHandle = -1;
             currentConfig = null;
+            handshakeChecker.removeCallbacksAndMessages(null);
             awgTurnOff(handleToClose);
             try {
                 vpnService.get(0, TimeUnit.NANOSECONDS).stopSelf();
@@ -340,6 +361,33 @@ public final class GoBackend implements Backend {
         }
 
         tunnel.onStateChange(state);
+    }
+
+    private void checkHandshakes(final Tunnel tunnel, final Config config) throws Exception {
+        if (currentTunnel != tunnel || currentTunnelHandle == -1 || config.getInterface().getXrayProtocol() == XrayProtocol.TCP)
+            return;
+        final Statistics stats = getStatistics(tunnel);
+        boolean hasZeroHandshake = false;
+        for (final Peer peer : config.getPeers()) {
+            final Statistics.Peer a = stats.get(peer.getPublicKey());
+            if (a != null && a.getLatestHandshakeEpochMillis() == 0) {
+                hasZeroHandshake = true;
+                break;
+            }
+        }
+
+        if (hasZeroHandshake) {
+            Log.i(TAG, "Handshake check failed, switching to TCP");
+            final Config.Builder newConfig = new Config.Builder();
+            newConfig.setInterface(new Interface.Builder()
+                    .parsePrivateKey(config.getInterface().getKeyPair().getPrivateKey().toBase64())
+                    .setXrayProtocol(XrayProtocol.TCP)
+                    .build());
+            for (final Peer peer : config.getPeers()) {
+                newConfig.addPeer(peer);
+            }
+            setState(tunnel, State.UP, newConfig.build());
+        }
     }
 
     /**
