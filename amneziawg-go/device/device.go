@@ -18,6 +18,7 @@ import (
 	"github.com/amnezia-vpn/amneziawg-go/conn"
 	"github.com/amnezia-vpn/amneziawg-go/device/awg"
 	"github.com/amnezia-vpn/amneziawg-go/ipc"
+	"github.com/amnezia-vpn/amneziawg-go/logger"
 	"github.com/amnezia-vpn/amneziawg-go/ratelimiter"
 	"github.com/amnezia-vpn/amneziawg-go/rwcancel"
 	"github.com/amnezia-vpn/amneziawg-go/tun"
@@ -129,7 +130,7 @@ type Device struct {
 
 	ipcMutex sync.RWMutex
 	closed   chan struct{}
-	log      *Logger
+	log      *logger.Logger
 
 	version    Version
 	awg        awg.Protocol
@@ -327,7 +328,7 @@ func (device *Device) SetPrivateKey(sk NoisePrivateKey) error {
 	return nil
 }
 
-func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *Logger) *Device {
+func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *logger.Logger) *Device {
 	device := new(Device)
 	device.state.state.Store(uint32(deviceStateDown))
 	device.closed = make(chan struct{})

@@ -24,6 +24,7 @@ import (
 	"github.com/amnezia-vpn/amneziawg-go/device"
 	"github.com/amnezia-vpn/amnezia-xray-core/core"
 	"github.com/amnezia-vpn/amneziawg-go/ipc"
+	"github.com/amnezia-vpn/amneziawg-go/logger"
 	"github.com/amnezia-vpn/amneziawg-go/tun"
 	"github.com/amnezia-vpn/amneziawg-go/xray"
 	"golang.org/x/sys/unix"
@@ -77,7 +78,7 @@ func init() {
 //export awgTurnOn
 func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig string) int32 {
 	tag := cstring("AmneziaWG/" + interfaceName)
-	logger := &device.Logger{
+	log := &logger.Logger{
 		Verbosef: AndroidLogger{level: C.ANDROID_LOG_DEBUG, tag: tag}.Printf,
 		Errorf:   AndroidLogger{level: C.ANDROID_LOG_ERROR, tag: tag}.Printf,
 	}
@@ -85,25 +86,25 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 	tun, name, err := tun.CreateUnmonitoredTUNFromFD(int(tunFd))
 	if err != nil {
 		unix.Close(int(tunFd))
-		logger.Errorf("CreateUnmonitoredTUNFromFD: %v", err)
+		log.Errorf("CreateUnmonitoredTUNFromFD: %v", err)
 		return -1
 	}
 
-	logger.Verbosef("Attaching to interface %v", name)
+	log.Verbosef("Attaching to interface %v", name)
 	var xrayServer core.Server
 	if xrayConfig != "" {
 		xrayServer, err = xray.StartXray(xrayConfig)
 		if err != nil {
-			logger.Errorf("Failed to start Xray: %v", err)
+			log.Errorf("Failed to start Xray: %v", err)
 			return -1
 		}
 	}
-	device := device.NewDevice(tun, conn.NewStdNetBind(xrayServer, logger), logger)
+	device := device.NewDevice(tun, conn.NewStdNetBind(xrayServer, log), log)
 
 	err = device.IpcSet(settings)
 	if err != nil {
 		unix.Close(int(tunFd))
-		logger.Errorf("IpcSet: %v", err)
+		log.Errorf("IpcSet: %v", err)
 		return -1
 	}
 	device.DisableSomeRoamingForBrokenMobileSemantics()
@@ -112,12 +113,12 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 
 	uapiFile, err := ipc.UAPIOpen(name)
 	if err != nil {
-		logger.Errorf("UAPIOpen: %v", err)
+		log.Errorf("UAPIOpen: %v", err)
 	} else {
 		uapi, err = ipc.UAPIListen(name, uapiFile)
 		if err != nil {
 			uapiFile.Close()
-			logger.Errorf("UAPIListen: %v", err)
+			log.Errorf("UAPIListen: %v", err)
 		} else {
 			go func() {
 				for {
@@ -133,12 +134,12 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 
 	err = device.Up()
 	if err != nil {
-		logger.Errorf("Unable to bring up device: %v", err)
+		log.Errorf("Unable to bring up device: %v", err)
 		uapiFile.Close()
 		device.Close()
 		return -1
 	}
-	logger.Verbosef("Device started")
+	log.Verbosef("Device started")
 
 	var i int32
 	for i = 0; i < math.MaxInt32; i++ {
@@ -147,7 +148,7 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 		}
 	}
 	if i == math.MaxInt32 {
-		logger.Errorf("Unable to find empty handle")
+		log.Errorf("Unable to find empty handle")
 		uapiFile.Close()
 		device.Close()
 		return -1

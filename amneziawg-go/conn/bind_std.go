@@ -18,7 +18,7 @@ import (
 
 	"github.com/amnezia-vpn/amnezia-xray-core/core"
 	xraynet "github.com/amnezia-vpn/amnezia-xray-core/common/net"
-	"github.com/amnezia-vpn/amneziawg-go/device"
+	"github.com/amnezia-vpn/amneziawg-go/logger"
 	"github.com/amnezia-vpn/amneziawg-go/xray"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
@@ -55,7 +55,7 @@ type StdNetBind struct {
 	xrayConns  map[string]net.Conn
 	xrayMutex  sync.Mutex
 	recv       chan *ReceivedPacket
-	log        *device.Logger
+	log        *logger.Logger
 }
 
 type ReceivedPacket struct {
@@ -63,7 +63,7 @@ type ReceivedPacket struct {
 	ep   Endpoint
 }
 
-func NewStdNetBind(xrayServer core.Server, log *device.Logger) Bind {
+func NewStdNetBind(xrayServer core.Server, log *logger.Logger) Bind {
 	return &StdNetBind{
 		xrayServer: xrayServer,
 		xrayConns:  make(map[string]net.Conn),
