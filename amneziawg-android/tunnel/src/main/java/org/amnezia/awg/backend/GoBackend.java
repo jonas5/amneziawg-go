@@ -378,15 +378,16 @@ public final class GoBackend implements Backend {
 
         if (hasZeroHandshake) {
             Log.i(TAG, "Handshake check failed, switching to TCP");
-            final Config.Builder newConfig = new Config.Builder();
-            newConfig.setInterface(new Interface.Builder()
-                    .parsePrivateKey(config.getInterface().getKeyPair().getPrivateKey().toBase64())
+            final Interface newInterface = new Interface.Builder()
+                    .from(config.getInterface())
                     .setXrayProtocol(XrayProtocol.TCP)
-                    .build());
-            for (final Peer peer : config.getPeers()) {
-                newConfig.addPeer(peer);
-            }
-            setState(tunnel, State.UP, newConfig.build());
+                    .build();
+            final Config newConfig = new Config.Builder()
+                    .setInterface(newInterface)
+                    .addPeers(config.getPeers())
+                    .build();
+            setState(tunnel, State.DOWN, null);
+            setState(tunnel, State.UP, newConfig);
         }
     }
 

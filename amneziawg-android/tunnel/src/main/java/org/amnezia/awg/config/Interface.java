@@ -576,6 +576,30 @@ public final class Interface {
             return this;
         }
 
+        public Builder from(final Interface interfaze) {
+            addresses.addAll(interfaze.getAddresses());
+            dnsServers.addAll(interfaze.getDnsServers());
+            dnsSearchDomains.addAll(interfaze.getDnsSearchDomains());
+            excludedApplications.addAll(interfaze.getExcludedApplications());
+            includedApplications.addAll(interfaze.getIncludedApplications());
+            keyPair = interfaze.getKeyPair();
+            listenPort = interfaze.getListenPort();
+            mtu = interfaze.getMtu();
+            junkPacketCount = interfaze.getJunkPacketCount();
+            junkPacketMinSize = interfaze.getJunkPacketMinSize();
+            junkPacketMaxSize = interfaze.getJunkPacketMaxSize();
+            initPacketJunkSize = interfaze.getInitPacketJunkSize();
+            responsePacketJunkSize = interfaze.getResponsePacketJunkSize();
+            cookieReplyPacketJunkSize = interfaze.getCookieReplyPacketJunkSize();
+            transportPacketJunkSize = interfaze.getTransportPacketJunkSize();
+            initPacketMagicHeader = interfaze.getInitPacketMagicHeader();
+            responsePacketMagicHeader = interfaze.getResponsePacketMagicHeader();
+            underloadPacketMagicHeader = interfaze.getUnderloadPacketMagicHeader();
+            transportPacketMagicHeader = interfaze.getTransportPacketMagicHeader();
+            xrayProtocol = interfaze.getXrayProtocol();
+            return this;
+        }
+
         public Builder parseAddresses(final CharSequence addresses) throws BadConfigException {
             try {
                 for (final String address : Attribute.split(addresses))

@@ -22,8 +22,10 @@ import (
 
 	"github.com/amnezia-vpn/amneziawg-go/conn"
 	"github.com/amnezia-vpn/amneziawg-go/device"
+	"github.com/amnezia-vpn/amnezia-xray-core/core"
 	"github.com/amnezia-vpn/amneziawg-go/ipc"
 	"github.com/amnezia-vpn/amneziawg-go/tun"
+	"github.com/amnezia-vpn/amneziawg-go/xray"
 	"golang.org/x/sys/unix"
 )
 
@@ -88,9 +90,17 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 	}
 
 	logger.Verbosef("Attaching to interface %v", name)
-	device := device.NewDevice(tun, conn.NewStdNetBind(), logger)
+	var xrayServer core.Server
+	if xrayConfig != "" {
+		xrayServer, err = xray.StartXray(xrayConfig)
+		if err != nil {
+			logger.Errorf("Failed to start Xray: %v", err)
+			return -1
+		}
+	}
+	device := device.NewDevice(tun, conn.NewStdNetBind(xrayServer), logger, xrayServer)
 
-	err = device.IpcSet(settings + "\nxray_config=" + xrayConfig)
+	err = device.IpcSet(settings)
 	if err != nil {
 		unix.Close(int(tunFd))
 		logger.Errorf("IpcSet: %v", err)

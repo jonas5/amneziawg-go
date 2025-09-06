@@ -16,6 +16,9 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/amnezia-vpn/amnezia-xray-core/core"
+	xraynet "github.com/amnezia-vpn/amnezia-xray-core/common/net"
+	"github.com/amnezia-vpn/amneziawg-go/xray"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 )
@@ -46,10 +49,13 @@ type StdNetBind struct {
 
 	blackhole4 bool
 	blackhole6 bool
+
+	xrayServer core.Server
 }
 
-func NewStdNetBind() Bind {
+func NewStdNetBind(xrayServer core.Server) Bind {
 	return &StdNetBind{
+		xrayServer: xrayServer,
 		udpAddrPool: sync.Pool{
 			New: func() any {
 				return &net.UDPAddr{
@@ -339,6 +345,25 @@ func (e ErrUDPGSODisabled) Unwrap() error {
 }
 
 func (s *StdNetBind) Send(bufs [][]byte, endpoint Endpoint) error {
+	if s.xrayServer != nil {
+		dest := xraynet.Destination{
+			Network: xraynet.Network_TCP,
+			Address: xraynet.IPAddress(endpoint.DstIP()),
+			Port:    xraynet.Port(endpoint.(*StdNetEndpoint).Port()),
+		}
+		conn, err := xray.Dial(context.Background(), s.xrayServer, dest)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+		for _, buf := range bufs {
+			_, err := conn.Write(buf)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	s.mu.Lock()
 	blackhole := s.blackhole4
 	conn := s.ipv4
