@@ -73,7 +73,7 @@ func init() {
 }
 
 //export awgTurnOn
-func awgTurnOn(interfaceName string, tunFd int32, settings string) int32 {
+func awgTurnOn(interfaceName string, proto string, tunFd int32, settings string) int32 {
 	tag := cstring("AmneziaWG/" + interfaceName)
 	logger := &device.Logger{
 		Verbosef: AndroidLogger{level: C.ANDROID_LOG_DEBUG, tag: tag}.Printf,
@@ -88,7 +88,14 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string) int32 {
 	}
 
 	logger.Verbosef("Attaching to interface %v", name)
-	device := device.NewDevice(tun, conn.NewStdNetBind(), logger)
+	var protocol device.Protocol
+	switch proto {
+	case "tcp":
+		protocol = device.TCP
+	default:
+		protocol = device.UDP
+	}
+	device := device.NewDevice(tun, protocol, logger)
 
 	err = device.IpcSet(settings)
 	if err != nil {

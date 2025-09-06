@@ -8,27 +8,33 @@
 #include <string.h>
 
 struct go_string { const char *str; long n; };
-extern int awgTurnOn(struct go_string ifname, int tun_fd, struct go_string settings);
+extern int awgTurnOn(struct go_string ifname, struct go_string proto, int tun_fd, struct go_string settings);
 extern void awgTurnOff(int handle);
 extern int awgGetSocketV4(int handle);
 extern int awgGetSocketV6(int handle);
 extern char *awgGetConfig(int handle);
 extern char *awgVersion();
 
-JNIEXPORT jint JNICALL Java_org_amnezia_awg_GoBackend_awgTurnOn(JNIEnv *env, jclass c, jstring ifname, jint tun_fd, jstring settings)
+JNIEXPORT jint JNICALL Java_org_amnezia_awg_GoBackend_awgTurnOn(JNIEnv *env, jclass c, jstring ifname, jstring proto, jint tun_fd, jstring settings)
 {
 	const char *ifname_str = (*env)->GetStringUTFChars(env, ifname, 0);
 	size_t ifname_len = (*env)->GetStringUTFLength(env, ifname);
+	const char *proto_str = (*env)->GetStringUTFChars(env, proto, 0);
+	size_t proto_len = (*env)->GetStringUTFLength(env, proto);
 	const char *settings_str = (*env)->GetStringUTFChars(env, settings, 0);
 	size_t settings_len = (*env)->GetStringUTFLength(env, settings);
 	int ret = awgTurnOn((struct go_string){
 		.str = ifname_str,
 		.n = ifname_len
+	}, (struct go_string){
+		.str = proto_str,
+		.n = proto_len
 	}, tun_fd, (struct go_string){
 		.str = settings_str,
 		.n = settings_len
 	});
 	(*env)->ReleaseStringUTFChars(env, ifname, ifname_str);
+	(*env)->ReleaseStringUTFChars(env, proto, proto_str);
 	(*env)->ReleaseStringUTFChars(env, settings, settings_str);
 	return ret;
 }

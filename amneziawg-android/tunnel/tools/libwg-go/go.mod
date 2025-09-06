@@ -7,6 +7,8 @@ require (
 	golang.org/x/sys v0.33.0
 )
 
+replace github.com/amnezia-vpn/amneziawg-go => ../../../amneziawg-go
+
 require (
 	github.com/tevino/abool v1.2.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

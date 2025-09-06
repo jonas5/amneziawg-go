@@ -314,7 +314,11 @@ public final class GoBackend implements Backend {
                 if (tun == null)
                     throw new BackendException(Reason.TUN_CREATION_ERROR);
                 Log.d(TAG, "Go backend " + awgVersion());
-                currentTunnelHandle = awgTurnOn(tunnel.getName(), tun.detachFd(), goConfig);
+                currentTunnelHandle = awgTurnOn(tunnel.getName(), "udp", tun.detachFd(), goConfig);
+                if (currentTunnelHandle < 0) {
+                    Log.w(TAG, "Failed to bring up tunnel in UDP mode. Trying TCP.");
+                    currentTunnelHandle = awgTurnOn(tunnel.getName(), "tcp", tun.detachFd(), goConfig);
+                }
             }
             if (currentTunnelHandle < 0)
                 throw new BackendException(Reason.GO_ACTIVATION_ERROR_CODE, currentTunnelHandle);

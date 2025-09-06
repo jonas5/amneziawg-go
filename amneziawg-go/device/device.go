@@ -57,6 +57,13 @@ func (av *AtomicVersion) Swap(new Version) Version {
 	return Version(av.value.Swap(uint32(new)))
 }
 
+type Protocol uint8
+
+const (
+	UDP Protocol = iota
+	TCP
+)
+
 type Device struct {
 	state struct {
 		// state holds the device's state. It is accessed atomically.
@@ -85,6 +92,7 @@ type Device struct {
 		port          uint16 // listening port
 		fwmark        uint32 // mark value (0 = disabled)
 		brokenRoaming bool
+		protocol      Protocol
 	}
 
 	staticIdentity struct {
@@ -325,12 +333,20 @@ func (device *Device) SetPrivateKey(sk NoisePrivateKey) error {
 	return nil
 }
 
-func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *Logger) *Device {
+func NewDevice(tunDevice tun.Device, protocol Protocol, logger *Logger) *Device {
 	device := new(Device)
 	device.state.state.Store(uint32(deviceStateDown))
 	device.closed = make(chan struct{})
 	device.log = logger
-	device.net.bind = bind
+
+	switch protocol {
+	case TCP:
+		device.net.bind = conn.NewTCPNetBind()
+	default:
+		device.net.bind = conn.NewStdNetBind()
+	}
+	device.net.protocol = protocol
+
 	device.tun.device = tunDevice
 	mtu, err := device.tun.device.MTU()
 	if err != nil {
