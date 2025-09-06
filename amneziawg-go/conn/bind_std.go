@@ -63,6 +63,10 @@ type ReceivedPacket struct {
 	ep   Endpoint
 }
 
+func (s *StdNetBind) ReceivePacket(data []byte, ep any) {
+	s.recv <- &ReceivedPacket{data: data, ep: ep.(Endpoint)}
+}
+
 func NewStdNetBind(xrayServer core.Server, log *logger.Logger) Bind {
 	return &StdNetBind{
 		xrayServer: xrayServer,
@@ -386,7 +390,7 @@ func (s *StdNetBind) Send(bufs [][]byte, endpoint Endpoint) error {
 			}
 			s.xrayConns[endpoint.DstToString()] = newConn
 			conn = newConn
-			go xray.Receive(conn, s.recv, endpoint, s.log)
+			go xray.Receive(conn, s, endpoint, s.log)
 		}
 		s.xrayMutex.Unlock()
 

@@ -9,9 +9,12 @@ import (
 	"github.com/amnezia-vpn/amnezia-xray-core/core"
 	xraynet "github.com/amnezia-vpn/amnezia-xray-core/common/net"
 	"github.com/amnezia-vpn/amnezia-xray-core/common/errors"
-	"github.com/amnezia-vpn/amneziawg-go/conn"
 	"github.com/amnezia-vpn/amneziawg-go/logger"
 )
+
+type PacketReceiver interface {
+	ReceivePacket(data []byte, ep any)
+}
 
 func StartXray(config string) (core.Server, error) {
 	c, err := core.LoadConfig("json", strings.NewReader(config))
@@ -31,7 +34,7 @@ func Dial(ctx context.Context, instance core.Server, dest xraynet.Destination) (
 	return core.Dial(ctx, instance.(*core.Instance), dest)
 }
 
-func Receive(conn net.Conn, recv chan *conn.ReceivedPacket, ep conn.Endpoint, log *logger.Logger) {
+func Receive(conn net.Conn, receiver PacketReceiver, ep any, log *logger.Logger) {
 	for {
 		buff := make([]byte, 1500)
 		n, err := conn.Read(buff)
@@ -43,6 +46,6 @@ func Receive(conn net.Conn, recv chan *conn.ReceivedPacket, ep conn.Endpoint, lo
 		}
 		newBuff := make([]byte, n)
 		copy(newBuff, buff[:n])
-		recv <- &conn.ReceivedPacket{data: newBuff, ep: ep}
+		receiver.ReceivePacket(newBuff, ep)
 	}
 }
