@@ -378,6 +378,7 @@ public final class GoBackend implements Backend {
 
         if (hasZeroHandshake) {
             Log.i(TAG, "Handshake check failed, switching to TCP");
+            awgTurnOff(currentTunnelHandle);
             final Interface newInterface = new Interface.Builder()
                     .from(config.getInterface())
                     .setXrayProtocol(XrayProtocol.TCP)

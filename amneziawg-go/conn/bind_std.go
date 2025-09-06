@@ -18,7 +18,6 @@ import (
 
 	"github.com/amnezia-vpn/amnezia-xray-core/core"
 	xraynet "github.com/amnezia-vpn/amnezia-xray-core/common/net"
-	"github.com/amnezia-vpn/amneziawg-go/xray"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 )
@@ -51,6 +50,8 @@ type StdNetBind struct {
 	blackhole6 bool
 
 	xrayServer core.Server
+	xrayConn   net.Conn
+	xrayMutex  sync.Mutex
 }
 
 func NewStdNetBind(xrayServer core.Server) Bind {
@@ -346,19 +347,29 @@ func (e ErrUDPGSODisabled) Unwrap() error {
 
 func (s *StdNetBind) Send(bufs [][]byte, endpoint Endpoint) error {
 	if s.xrayServer != nil {
-		dest := xraynet.Destination{
-			Network: xraynet.Network_TCP,
-			Address: xraynet.IPAddress(endpoint.DstIP()),
-			Port:    xraynet.Port(endpoint.(*StdNetEndpoint).Port()),
-		}
-		conn, err := xray.Dial(context.Background(), s.xrayServer, dest)
-		if err != nil {
-			return err
-		}
-		defer conn.Close()
-		for _, buf := range bufs {
-			_, err := conn.Write(buf)
+		s.xrayMutex.Lock()
+		if s.xrayConn == nil {
+			dest := xraynet.Destination{
+				Network: xraynet.Network_TCP,
+				Address: xraynet.IPAddress(endpoint.DstIP()),
+				Port:    xraynet.Port(endpoint.(*StdNetEndpoint).Port()),
+			}
+			conn, err := core.Dial(context.Background(), s.xrayServer.(*core.Instance), dest)
 			if err != nil {
+				s.xrayMutex.Unlock()
+				return err
+			}
+			s.xrayConn = conn
+		}
+		s.xrayMutex.Unlock()
+
+		for _, buf := range bufs {
+			_, err := s.xrayConn.Write(buf)
+			if err != nil {
+				s.xrayMutex.Lock()
+				s.xrayConn.Close()
+				s.xrayConn = nil
+				s.xrayMutex.Unlock()
 				return err
 			}
 		}

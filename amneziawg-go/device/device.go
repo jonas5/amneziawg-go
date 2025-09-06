@@ -131,8 +131,9 @@ type Device struct {
 	closed   chan struct{}
 	log      *Logger
 
-	version Version
-	awg     awg.Protocol
+	version    Version
+	awg        awg.Protocol
+	xrayServer core.Server
 }
 
 // deviceState represents the state of a Device.
@@ -326,14 +327,13 @@ func (device *Device) SetPrivateKey(sk NoisePrivateKey) error {
 	return nil
 }
 
-func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *Logger, xrayServer core.Server) *Device {
+func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *Logger) *Device {
 	device := new(Device)
 	device.state.state.Store(uint32(deviceStateDown))
 	device.closed = make(chan struct{})
 	device.log = logger
 	device.net.bind = bind
 	device.tun.device = tunDevice
-	device.xrayServer = xrayServer
 	mtu, err := device.tun.device.MTU()
 	if err != nil {
 		device.log.Errorf("Trouble determining MTU, assuming default: %v", err)
@@ -423,6 +423,10 @@ func (device *Device) Close() {
 	}
 	device.state.state.Store(uint32(deviceStateClosed))
 	device.log.Verbosef("Device closing")
+
+	if device.xrayServer != nil {
+		device.xrayServer.Close()
+	}
 
 	device.tun.device.Close()
 	device.downLocked()

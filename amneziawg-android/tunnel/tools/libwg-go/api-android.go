@@ -98,7 +98,7 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 			return -1
 		}
 	}
-	device := device.NewDevice(tun, conn.NewStdNetBind(xrayServer), logger, xrayServer)
+	device := device.NewDevice(tun, conn.NewStdNetBind(xrayServer), logger)
 
 	err = device.IpcSet(settings)
 	if err != nil {

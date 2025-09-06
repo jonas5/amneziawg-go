@@ -1,11 +1,9 @@
 package xray
 
 import (
-	"context"
 	"strings"
 
 	"github.com/amnezia-vpn/amnezia-xray-core/core"
-	"github.com/amnezia-vpn/amnezia-xray-core/common/net"
 	"github.com/amnezia-vpn/amnezia-xray-core/common/errors"
 )
 
@@ -21,8 +19,4 @@ func StartXray(config string) (core.Server, error) {
 	}
 
 	return server, nil
-}
-
-func Dial(ctx context.Context, instance core.Server, dest net.Destination) (net.Conn, error) {
-	return core.Dial(ctx, instance.(*core.Instance), dest)
 }
