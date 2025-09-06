@@ -241,6 +241,25 @@
                                 android:textAlignment="center" />
                         </com.google.android.material.textfield.TextInputLayout>
 
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/xray_protocol_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            android:text="@string/xray_protocol"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/mtu_label_layout" />
+
+                        <Spinner
+                            android:id="@+id/xray_protocol_spinner"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            android:entries="@array/xray_protocol_options"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/xray_protocol_label"
+                            app:layout_constraintTop_toBottomOf="@id/mtu_label_layout" />
+
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/junk_packet_count_layout"
                             android:layout_width="0dp"
@@ -249,7 +268,7 @@
                             android:hint="@string/junk_packet_count"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/dns_servers_label_layout">
+                            app:layout_constraintTop_toBottomOf="@id/xray_protocol_spinner">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/junk_packet_count_text"

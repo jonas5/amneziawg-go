@@ -2,13 +2,14 @@ package xray
 
 import (
 	"context"
+	"encoding/binary"
 	"io"
 	"net"
 	"strings"
 
 	"github.com/amnezia-vpn/amnezia-xray-core/core"
-	xraynet "github.com/amnezia-vpn/amnezia-xray-core/common/net"
 	"github.com/amnezia-vpn/amnezia-xray-core/common/errors"
+	xraynet "github.com/amnezia-vpn/amnezia-xray-core/common/net"
 	"github.com/amnezia-vpn/amneziawg-go/logger"
 )
 
@@ -35,17 +36,27 @@ func Dial(ctx context.Context, instance core.Server, dest xraynet.Destination) (
 }
 
 func Receive(conn net.Conn, receiver PacketReceiver, ep any, log *logger.Logger) {
+	var lenbuf [2]byte
 	for {
-		buff := make([]byte, 1500)
-		n, err := conn.Read(buff)
+		_, err := io.ReadFull(conn, lenbuf[:])
 		if err != nil {
-			if err != io.EOF {
-				log.Errorf("xray receive error: %v", err)
+			if err != io.EOF && err != io.ErrUnexpectedEOF {
+				log.Errorf("xray receive error (reading length): %v", err)
 			}
 			return
 		}
-		newBuff := make([]byte, n)
-		copy(newBuff, buff[:n])
-		receiver.ReceivePacket(newBuff, ep)
+
+		length := binary.BigEndian.Uint16(lenbuf[:])
+		packetBuf := make([]byte, length)
+
+		_, err = io.ReadFull(conn, packetBuf)
+		if err != nil {
+			if err != io.EOF && err != io.ErrUnexpectedEOF {
+				log.Errorf("xray receive error (reading packet): %v", err)
+			}
+			return
+		}
+
+		receiver.ReceivePacket(packetBuf, ep)
 	}
 }

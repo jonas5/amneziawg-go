@@ -1,53 +1,43 @@
-/*
- * Copyright © 2023 AmneziaVPN. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 package org.amnezia.awg;
 
 import org.amnezia.awg.config.Config;
+import org.amnezia.awg.config.InetEndpoint;
 import org.amnezia.awg.config.Peer;
 import org.amnezia.awg.config.XrayProtocol;
 
-import java.util.Locale;
-
 public class Xray {
     public static String generate(final Config config) {
-        if (config.getInterface().getXrayProtocol() != XrayProtocol.TCP) {
+        if (config.getInterface().getXrayProtocol() == XrayProtocol.UDP) {
             return "";
         }
-
         final Peer peer = config.getPeers().get(0);
-        final String host = peer.getEndpoint().get().getHost();
-        final int port = peer.getEndpoint().get().getPort();
+        final InetEndpoint endpoint = peer.getEndpoint().orElse(null);
+        if (endpoint == null) {
+            return "";
+        }
+        final String endpointAddr = endpoint.getResolved().get().getHostAddress();
+        final int endpointPort = endpoint.getPort();
 
-        return String.format(Locale.ROOT, "{\n" +
+        return "{\n" +
                 "  \"inbounds\": [\n" +
                 "    {\n" +
-                "      \"port\": 1080,\n" +
                 "      \"listen\": \"127.0.0.1\",\n" +
-                "      \"protocol\": \"socks\",\n" +
+                "      \"port\": " + 27182 + ",\n" +
+                "      \"protocol\": \"dokodemo-door\",\n" +
                 "      \"settings\": {\n" +
-                "        \"auth\": \"noauth\",\n" +
-                "        \"udp\": true\n" +
-                "      }\n" +
+                "        \"network\": \"tcp\",\n" +
+                "        \"address\": \"" + endpointAddr + "\",\n" +
+                "        \"port\": " + endpointPort + "\n" +
+                "      },\n" +
+                "      \"tag\": \"inbound\"\n" +
                 "    }\n" +
                 "  ],\n" +
                 "  \"outbounds\": [\n" +
                 "    {\n" +
                 "      \"protocol\": \"freedom\",\n" +
-                "      \"settings\": {\n" +
-                "        \"vnext\": [\n" +
-                "          {\n" +
-                "            \"address\": \"%s\",\n" +
-                "            \"port\": %d,\n" +
-                "            \"users\": []\n" +
-                "          }\n" +
-                "        ]\n" +
-                "      }\n" +
+                "      \"tag\": \"outbound\"\n" +
                 "    }\n" +
                 "  ]\n" +
-                "}", host, port);
+                "}";
     }
 }

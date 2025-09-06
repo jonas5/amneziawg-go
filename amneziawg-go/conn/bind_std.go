@@ -7,6 +7,7 @@ package conn
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
@@ -395,7 +396,20 @@ func (s *StdNetBind) Send(bufs [][]byte, endpoint Endpoint) error {
 		s.xrayMutex.Unlock()
 
 		for _, buf := range bufs {
-			_, err := conn.Write(buf)
+			var lenbuf [2]byte
+			if len(buf) > 65535 {
+				return errors.New("packet too large")
+			}
+			binary.BigEndian.PutUint16(lenbuf[:], uint16(len(buf)))
+			_, err := conn.Write(lenbuf[:])
+			if err != nil {
+				s.xrayMutex.Lock()
+				conn.Close()
+				delete(s.xrayConns, endpoint.DstToString())
+				s.xrayMutex.Unlock()
+				return err
+			}
+			_, err = conn.Write(buf)
 			if err != nil {
 				s.xrayMutex.Lock()
 				conn.Close()

@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.Toast
 import androidx.core.os.BundleCompat
@@ -23,17 +24,18 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 import org.amnezia.awg.Application
 import org.amnezia.awg.R
 import org.amnezia.awg.backend.Tunnel
+import org.amnezia.awg.config.Config
+import org.amnezia.awg.config.XrayProtocol
 import org.amnezia.awg.databinding.TunnelEditorFragmentBinding
 import org.amnezia.awg.model.ObservableTunnel
 import org.amnezia.awg.util.AdminKnobs
 import org.amnezia.awg.util.BiometricAuthenticator
 import org.amnezia.awg.util.ErrorMessages
 import org.amnezia.awg.viewmodel.ConfigProxy
-import org.amnezia.awg.config.Config
-import kotlinx.coroutines.launch
 
 /**
  * Fragment for editing an AmneziaWG configuration.
@@ -85,6 +87,15 @@ class TunnelEditorFragment : BaseFragment(), MenuProvider {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        binding?.xrayProtocolSpinner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                binding?.config?.`interface`?.xrayProtocol = XrayProtocol.values()[position]
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
         requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
@@ -214,7 +225,9 @@ class TunnelEditorFragment : BaseFragment(), MenuProvider {
             binding!!.name = tunnel!!.name
             lifecycleScope.launch {
                 try {
-                    onConfigLoaded(tunnel!!.getConfigAsync())
+                    val config = tunnel!!.getConfigAsync()
+                    onConfigLoaded(config)
+                    binding?.xrayProtocolSpinner?.setSelection(config.getInterface().getXrayProtocol().ordinal)
                 } catch (_: Throwable) {
                 }
             }

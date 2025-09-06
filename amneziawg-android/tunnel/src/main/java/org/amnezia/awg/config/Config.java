@@ -194,6 +194,10 @@ public final class Config {
             return this;
         }
 
+        public Builder from(final Config config) {
+            return setInterface(config.getInterface()).addPeers(config.getPeers());
+        }
+
         public Builder addPeers(final Collection<Peer> peers) {
             this.peers.addAll(peers);
             return this;

@@ -305,3 +305,7 @@ func (peer *Peer) markEndpointSrcForClearing() {
 	}
 	peer.endpoint.clearSrcOnTx = true
 }
+
+func (peer *Peer) LastHandshakeNano() int64 {
+	return peer.lastHandshakeNano.Load()
+}

@@ -98,9 +98,6 @@ public final class Interface {
                     new BadConfigException(Section.INTERFACE, Location.TOP_LEVEL,
                             Reason.SYNTAX_ERROR, line));
             switch (attribute.getKey().toLowerCase(Locale.ENGLISH)) {
-                case "xrayprotocol":
-                    builder.parseXrayProtocol(attribute.getValue());
-                    break;
                 case "address":
                     builder.parseAddresses(attribute.getValue());
                     break;
@@ -370,7 +367,6 @@ public final class Interface {
         return xrayProtocol;
     }
 
-
     @Override
     public int hashCode() {
         int hash = 1;
@@ -443,7 +439,6 @@ public final class Interface {
         responsePacketMagicHeader.ifPresent(h2 -> sb.append("H2 = ").append(h2).append('\n'));
         underloadPacketMagicHeader.ifPresent(h3 -> sb.append("H3 = ").append(h3).append('\n'));
         transportPacketMagicHeader.ifPresent(h4 -> sb.append("H4 = ").append(h4).append('\n'));
-        sb.append("XrayProtocol = ").append(xrayProtocol.name()).append('\n');
         sb.append("PrivateKey = ").append(keyPair.getPrivateKey().toBase64()).append('\n');
         return sb.toString();
     }
@@ -469,7 +464,6 @@ public final class Interface {
         responsePacketMagicHeader.ifPresent(h2 -> sb.append("h2=").append(h2).append('\n'));
         underloadPacketMagicHeader.ifPresent(h3 -> sb.append("h3=").append(h3).append('\n'));
         transportPacketMagicHeader.ifPresent(h4 -> sb.append("h4=").append(h4).append('\n'));
-        sb.append("xray_protocol=").append(xrayProtocol.name()).append('\n');
         return sb.toString();
     }
 
@@ -513,7 +507,8 @@ public final class Interface {
         private Optional<Long> underloadPacketMagicHeader = Optional.empty();
         // Defaults to not present.
         private Optional<Long> transportPacketMagicHeader = Optional.empty();
-        private XrayProtocol xrayProtocol = XrayProtocol.AUTO;
+        // Defaults to UDP.
+        private XrayProtocol xrayProtocol = XrayProtocol.UDP;
 
 
         public Builder addAddress(final InetNetwork address) {
@@ -573,30 +568,6 @@ public final class Interface {
 
         public Builder includeApplications(final Collection<String> applications) {
             includedApplications.addAll(applications);
-            return this;
-        }
-
-        public Builder from(final Interface interfaze) {
-            addresses.addAll(interfaze.getAddresses());
-            dnsServers.addAll(interfaze.getDnsServers());
-            dnsSearchDomains.addAll(interfaze.getDnsSearchDomains());
-            excludedApplications.addAll(interfaze.getExcludedApplications());
-            includedApplications.addAll(interfaze.getIncludedApplications());
-            keyPair = interfaze.getKeyPair();
-            listenPort = interfaze.getListenPort();
-            mtu = interfaze.getMtu();
-            junkPacketCount = interfaze.getJunkPacketCount();
-            junkPacketMinSize = interfaze.getJunkPacketMinSize();
-            junkPacketMaxSize = interfaze.getJunkPacketMaxSize();
-            initPacketJunkSize = interfaze.getInitPacketJunkSize();
-            responsePacketJunkSize = interfaze.getResponsePacketJunkSize();
-            cookieReplyPacketJunkSize = interfaze.getCookieReplyPacketJunkSize();
-            transportPacketJunkSize = interfaze.getTransportPacketJunkSize();
-            initPacketMagicHeader = interfaze.getInitPacketMagicHeader();
-            responsePacketMagicHeader = interfaze.getResponsePacketMagicHeader();
-            underloadPacketMagicHeader = interfaze.getUnderloadPacketMagicHeader();
-            transportPacketMagicHeader = interfaze.getTransportPacketMagicHeader();
-            xrayProtocol = interfaze.getXrayProtocol();
             return this;
         }
 
@@ -748,10 +719,6 @@ public final class Interface {
             }
         }
 
-        public Builder parseXrayProtocol(final String protocol) {
-            return setXrayProtocol(XrayProtocol.newInstance(protocol));
-        }
-
         public Builder setKeyPair(final KeyPair keyPair) {
             this.keyPair = keyPair;
             return this;
@@ -861,8 +828,8 @@ public final class Interface {
             return this;
         }
 
-        public Builder setXrayProtocol(final XrayProtocol protocol) {
-            xrayProtocol = protocol;
+        public Builder setXrayProtocol(final XrayProtocol xrayProtocol) {
+            this.xrayProtocol = xrayProtocol;
             return this;
         }
     }

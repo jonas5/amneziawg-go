@@ -12,13 +12,13 @@ import "C"
 import (
 	"fmt"
 	"math"
-	"net"
 	"os"
 	"os/signal"
 	"runtime"
 	"runtime/debug"
 	"strings"
 	"unsafe"
+	"net"
 
 	"github.com/amnezia-vpn/amneziawg-go/conn"
 	"github.com/amnezia-vpn/amneziawg-go/device"
@@ -51,6 +51,7 @@ func (l AndroidLogger) Printf(format string, args ...interface{}) {
 type TunnelHandle struct {
 	device *device.Device
 	uapi   net.Listener
+	xray   core.Server
 }
 
 var tunnelHandles map[int32]TunnelHandle
@@ -100,14 +101,8 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 		}
 	}
 	device := device.NewDevice(tun, conn.NewStdNetBind(xrayServer, log), log)
-
-	err = device.IpcSet(settings)
-	if err != nil {
-		unix.Close(int(tunFd))
-		log.Errorf("IpcSet: %v", err)
-		return -1
-	}
-	device.DisableSomeRoamingForBrokenMobileSemantics()
+	device.IpcSet(settings)
+	device.Up()
 
 	var uapi net.Listener
 
@@ -132,13 +127,6 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 		}
 	}
 
-	err = device.Up()
-	if err != nil {
-		log.Errorf("Unable to bring up device: %v", err)
-		uapiFile.Close()
-		device.Close()
-		return -1
-	}
 	log.Verbosef("Device started")
 
 	var i int32
@@ -153,8 +141,34 @@ func awgTurnOn(interfaceName string, tunFd int32, settings string, xrayConfig st
 		device.Close()
 		return -1
 	}
-	tunnelHandles[i] = TunnelHandle{device: device, uapi: uapi}
+	tunnelHandles[i] = TunnelHandle{device: device, uapi: uapi, xray: xrayServer}
 	return i
+}
+
+//export awgSetConfig
+func awgSetConfig(tunnelHandle int32, settings string, xrayConfig string) {
+	handle, ok := tunnelHandles[tunnelHandle]
+	if !ok {
+		return
+	}
+	if xrayConfig != "" {
+		if handle.xray != nil {
+			handle.xray.Close()
+		}
+		xrayServer, err := xray.StartXray(xrayConfig)
+		if err != nil {
+			handle.device.Notice("Failed to start Xray: %v", err)
+			return
+		}
+		handle.xray = xrayServer
+		if err := handle.device.BindUpdate(conn.NewStdNetBind(xrayServer, handle.device.Log())); err != nil {
+			handle.device.Notice("Failed to update bind: %v", err)
+			return
+		}
+	}
+	if err := handle.device.IpcSet(settings); err != nil {
+		handle.device.Notice("IpcSet: %v", err)
+	}
 }
 
 //export awgTurnOff
@@ -215,6 +229,21 @@ func awgGetConfig(tunnelHandle int32) *C.char {
 		return nil
 	}
 	return C.CString(settings)
+}
+
+//export awgGetLastHandshake
+func awgGetLastHandshake(tunnelHandle int32) int64 {
+	handle, ok := tunnelHandles[tunnelHandle]
+	if !ok {
+		return 0
+	}
+	var lastHandshake int64
+	handle.device.VisitPeers(func(p *device.Peer) {
+		if hs := p.LastHandshakeNano(); hs > lastHandshake {
+			lastHandshake = hs
+		}
+	})
+	return lastHandshake
 }
 
 //export awgVersion

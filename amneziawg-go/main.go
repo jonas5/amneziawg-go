@@ -17,7 +17,6 @@ import (
 	"github.com/amnezia-vpn/amneziawg-go/conn"
 	"github.com/amnezia-vpn/amneziawg-go/device"
 	"github.com/amnezia-vpn/amneziawg-go/ipc"
-	"github.com/amnezia-vpn/amneziawg-go/logger"
 	"github.com/amnezia-vpn/amneziawg-go/tun"
 	"golang.org/x/sys/unix"
 )
@@ -101,13 +100,13 @@ func main() {
 	logLevel := func() int {
 		switch os.Getenv("LOG_LEVEL") {
 		case "verbose", "debug":
-			return logger.LogLevelVerbose
+			return device.LogLevelVerbose
 		case "error":
-			return logger.LogLevelError
+			return device.LogLevelError
 		case "silent":
-			return logger.LogLevelSilent
+			return device.LogLevelSilent
 		}
-		return logger.LogLevelError
+		return device.LogLevelError
 	}()
 
 	// open TUN device (or use supplied fd)
@@ -141,15 +140,15 @@ func main() {
 		}
 	}
 
-	log := logger.NewLogger(
+	logger := device.NewLogger(
 		logLevel,
 		fmt.Sprintf("(%s) ", interfaceName),
 	)
 
-	log.Verbosef("Starting amneziawg-go version %s", Version)
+	logger.Verbosef("Starting amneziawg-go version %s", Version)
 
 	if err != nil {
-		log.Errorf("Failed to create TUN device: %v", err)
+		logger.Errorf("Failed to create TUN device: %v", err)
 		os.Exit(ExitSetupFailed)
 	}
 
@@ -171,7 +170,7 @@ func main() {
 		return os.NewFile(uintptr(fd), ""), nil
 	}()
 	if err != nil {
-		log.Errorf("UAPI listen error: %v", err)
+		logger.Errorf("UAPI listen error: %v", err)
 		os.Exit(ExitSetupFailed)
 		return
 	}
@@ -183,7 +182,7 @@ func main() {
 		env = append(env, fmt.Sprintf("%s=4", ENV_WG_UAPI_FD))
 		env = append(env, fmt.Sprintf("%s=1", ENV_WG_PROCESS_FOREGROUND))
 		files := [3]*os.File{}
-		if os.Getenv("LOG_LEVEL") != "" && logLevel != logger.LogLevelSilent {
+		if os.Getenv("LOG_LEVEL") != "" && logLevel != device.LogLevelSilent {
 			files[0], _ = os.Open(os.DevNull)
 			files[1] = os.Stdout
 			files[2] = os.Stderr
@@ -206,7 +205,7 @@ func main() {
 
 		path, err := os.Executable()
 		if err != nil {
-			log.Errorf("Failed to determine executable: %v", err)
+			logger.Errorf("Failed to determine executable: %v", err)
 			os.Exit(ExitSetupFailed)
 		}
 
@@ -216,23 +215,23 @@ func main() {
 			attr,
 		)
 		if err != nil {
-			log.Errorf("Failed to daemonize: %v", err)
+			logger.Errorf("Failed to daemonize: %v", err)
 			os.Exit(ExitSetupFailed)
 		}
 		process.Release()
 		return
 	}
 
-	device := device.NewDevice(tdev, conn.NewDefaultBind(), log)
+	device := device.NewDevice(tdev, conn.NewDefaultBind(), logger)
 
-	log.Verbosef("Device started")
+	logger.Verbosef("Device started")
 
 	errs := make(chan error)
 	term := make(chan os.Signal, 1)
 
 	uapi, err := ipc.UAPIListen(interfaceName, fileUAPI)
 	if err != nil {
-		log.Errorf("Failed to listen on uapi socket: %v", err)
+		logger.Errorf("Failed to listen on uapi socket: %v", err)
 		os.Exit(ExitSetupFailed)
 	}
 
@@ -247,7 +246,7 @@ func main() {
 		}
 	}()
 
-	log.Verbosef("UAPI listener started")
+	logger.Verbosef("UAPI listener started")
 
 	// wait for program to terminate
 
@@ -265,5 +264,5 @@ func main() {
 	uapi.Close()
 	device.Close()
 
-	log.Verbosef("Shutting down")
+	logger.Verbosef("Shutting down")
 }

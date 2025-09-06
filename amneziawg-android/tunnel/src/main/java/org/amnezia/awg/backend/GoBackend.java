@@ -8,18 +8,14 @@ package org.amnezia.awg.backend;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.system.OsConstants;
 import android.util.Log;
 
 import org.amnezia.awg.backend.BackendException.Reason;
 import org.amnezia.awg.backend.Tunnel.State;
-import org.amnezia.awg.util.SharedLibraryLoader;
 import org.amnezia.awg.config.Config;
 import org.amnezia.awg.config.InetEndpoint;
-import org.amnezia.awg.Xray;
 import org.amnezia.awg.config.InetNetwork;
 import org.amnezia.awg.config.Interface;
 import org.amnezia.awg.config.Peer;
@@ -27,14 +23,19 @@ import org.amnezia.awg.config.XrayProtocol;
 import org.amnezia.awg.crypto.Key;
 import org.amnezia.awg.crypto.KeyFormatException;
 import org.amnezia.awg.util.NonNullForAll;
+import org.amnezia.awg.util.SharedLibraryLoader;
+import org.amnezia.awg.Xray;
+
 
 import java.net.InetAddress;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -49,15 +50,29 @@ import static org.amnezia.awg.GoBackend.*;
  */
 @NonNullForAll
 public final class GoBackend implements Backend {
+    private static native int awgGetSocketV4(int handle);
+    private static native int awgGetSocketV6(int handle);
+    private static native long awgGetLastHandshake(int handle);
+    private static native String awgGetConfig(int handle);
+    private static native String awgVersion();
+    private static native int awgTurnOn(String ifName, int tunFd, String settings, String xrayConfig);
+    private static native void awgTurnOff(int handle);
+    private static native void awgSetConfig(int handle, String settings, String xrayConfig);
+
     private static final int DNS_RESOLUTION_RETRIES = 10;
     private static final String TAG = "AmneziaWG/GoBackend";
+    private static final int FALLBACK_TIMEOUT_MS = 5000;
+    private static final int HANDSHAKE_CHECK_MS = 500;
     @Nullable private static AlwaysOnCallback alwaysOnCallback;
     private static GhettoCompletableFuture<VpnService> vpnService = new GhettoCompletableFuture<>();
     private final Context context;
     @Nullable private Config currentConfig;
     @Nullable private Tunnel currentTunnel;
     private int currentTunnelHandle = -1;
-    private final Handler handshakeChecker = new Handler(Looper.getMainLooper());
+    private final ScheduledExecutorService handshakeExecutor = Executors.newSingleThreadScheduledExecutor();
+    @Nullable private ScheduledFuture<?> handshakeFuture;
+    @Nullable private ScheduledFuture<?> fallbackFuture;
+
 
     /**
      * Public constructor for GoBackend.
@@ -202,13 +217,19 @@ public final class GoBackend implements Backend {
 
         if (state == State.TOGGLE)
             state = originalState == State.UP ? State.DOWN : State.UP;
-        if (state == originalState && tunnel == currentTunnel && config == currentConfig)
-            return originalState;
+        synchronized (this) {
+            if (state == originalState && tunnel == currentTunnel && config == currentConfig)
+                return originalState;
+        }
         if (state == State.UP) {
-            final Config originalConfig = currentConfig;
-            final Tunnel originalTunnel = currentTunnel;
-            if (currentTunnel != null)
-                setStateInternal(currentTunnel, null, State.DOWN);
+            final Config originalConfig;
+            final Tunnel originalTunnel;
+            synchronized (this) {
+                originalConfig = currentConfig;
+                originalTunnel = currentTunnel;
+            }
+            if (originalTunnel != null)
+                setStateInternal(originalTunnel, null, State.DOWN);
             try {
                 setStateInternal(tunnel, config, state);
             } catch (final Exception e) {
@@ -327,8 +348,10 @@ public final class GoBackend implements Backend {
             if (currentTunnelHandle < 0)
                 throw new BackendException(Reason.GO_ACTIVATION_ERROR_CODE, currentTunnelHandle);
 
-            currentTunnel = tunnel;
-            currentConfig = config;
+            synchronized (this) {
+                currentTunnel = tunnel;
+                currentConfig = config;
+            }
 
             service.protect(awgGetSocketV4(currentTunnelHandle));
             service.protect(awgGetSocketV6(currentTunnelHandle));
@@ -336,24 +359,56 @@ public final class GoBackend implements Backend {
             final Tunnel savedTunnel = tunnel;
             final Config savedConfig = config;
             if (config.getInterface().getXrayProtocol() == XrayProtocol.AUTO) {
-                handshakeChecker.postDelayed(() -> {
+                final Runnable fallbackRunnable = () -> {
+                    Log.i(TAG, "Handshake check failed, switching to TCP");
                     try {
-                        checkHandshakes(savedTunnel, savedConfig);
+                        final Interface newInterface = new Interface.Builder()
+                                .from(savedConfig.getInterface())
+                                .setXrayProtocol(XrayProtocol.TCP)
+                                .build();
+                        final Config newConfig = new Config.Builder()
+                                .from(savedConfig)
+                                .setInterface(newInterface)
+                                .build();
+                        final String goConfig = newConfig.toAwgUserspaceString();
+                        final String xrayConfig = Xray.generate(newConfig);
+                        awgSetConfig(currentTunnelHandle, goConfig, xrayConfig);
+                        synchronized (this) {
+                            currentConfig = newConfig;
+                        }
                     } catch (final Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Failed to switch to TCP", e);
                     }
-                }, 5000);
+                    if (handshakeFuture != null) {
+                        handshakeFuture.cancel(false);
+                        handshakeFuture = null;
+                    }
+                };
+                fallbackFuture = handshakeExecutor.schedule(fallbackRunnable, FALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+                final Runnable handshakeCheckRunnable = () -> checkHandshakes(savedTunnel);
+                handshakeFuture = handshakeExecutor.scheduleWithFixedDelay(handshakeCheckRunnable, 0, HANDSHAKE_CHECK_MS, TimeUnit.MILLISECONDS);
             }
         } else {
             if (currentTunnelHandle == -1) {
                 Log.w(TAG, "Tunnel already down");
                 return;
             }
-            int handleToClose = currentTunnelHandle;
-            currentTunnel = null;
-            currentTunnelHandle = -1;
-            currentConfig = null;
-            handshakeChecker.removeCallbacksAndMessages(null);
+            if (handshakeFuture != null) {
+                handshakeFuture.cancel(false);
+                handshakeFuture = null;
+            }
+            if (fallbackFuture != null) {
+                fallbackFuture.cancel(false);
+                fallbackFuture = null;
+            }
+            int handleToClose;
+            synchronized (this) {
+                handleToClose = currentTunnelHandle;
+                currentTunnel = null;
+                currentTunnelHandle = -1;
+                currentConfig = null;
+            }
             awgTurnOff(handleToClose);
             try {
                 vpnService.get(0, TimeUnit.NANOSECONDS).stopSelf();
@@ -363,31 +418,22 @@ public final class GoBackend implements Backend {
         tunnel.onStateChange(state);
     }
 
-    private void checkHandshakes(final Tunnel tunnel, final Config config) throws Exception {
-        if (currentTunnel != tunnel || currentTunnelHandle == -1 || config.getInterface().getXrayProtocol() == XrayProtocol.TCP)
+    private void checkHandshakes(final Tunnel tunnel) {
+        if (currentTunnel != tunnel || currentTunnelHandle == -1) {
             return;
-        final Statistics stats = getStatistics(tunnel);
-        boolean hasZeroHandshake = false;
-        for (final Peer peer : config.getPeers()) {
-            final Statistics.PeerStats p = stats.peer(peer.getPublicKey());
-            if (p != null && p.latestHandshakeEpochMillis() == 0) {
-                hasZeroHandshake = true;
-                break;
-            }
         }
+        final long lastHandshakeNano = awgGetLastHandshake(currentTunnelHandle);
 
-        if (hasZeroHandshake) {
-            Log.i(TAG, "Handshake check failed, switching to TCP");
-            final Interface newInterface = new Interface.Builder()
-                    .from(config.getInterface())
-                    .setXrayProtocol(XrayProtocol.TCP)
-                    .build();
-            final Config newConfig = new Config.Builder()
-                    .setInterface(newInterface)
-                    .addPeers(config.getPeers())
-                    .build();
-            setState(tunnel, State.DOWN, null);
-            setState(tunnel, State.UP, newConfig);
+        if (lastHandshakeNano > 0) {
+            Log.i(TAG, "Handshake successful, cancelling TCP fallback");
+            if (fallbackFuture != null) {
+                fallbackFuture.cancel(false);
+                fallbackFuture = null;
+            }
+            if (handshakeFuture != null) {
+                handshakeFuture.cancel(false);
+                handshakeFuture = null;
+            }
         }
     }
 

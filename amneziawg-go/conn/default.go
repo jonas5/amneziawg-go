@@ -7,4 +7,4 @@
 
 package conn
 
-func NewDefaultBind() Bind { return NewStdNetBind(nil, nil) }
+func NewDefaultBind() Bind { return NewStdNetBind() }

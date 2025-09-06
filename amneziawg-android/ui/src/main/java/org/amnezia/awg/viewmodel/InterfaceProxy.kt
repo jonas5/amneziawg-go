@@ -14,6 +14,7 @@ import org.amnezia.awg.BR
 import org.amnezia.awg.config.Attribute
 import org.amnezia.awg.config.BadConfigException
 import org.amnezia.awg.config.Interface
+import org.amnezia.awg.config.XrayProtocol
 import org.amnezia.awg.crypto.Key
 import org.amnezia.awg.crypto.KeyFormatException
 import org.amnezia.awg.crypto.KeyPair
@@ -132,6 +133,13 @@ class InterfaceProxy : BaseObservable, Parcelable {
             ""
         }
 
+    @get:Bindable
+    var xrayProtocol: XrayProtocol = XrayProtocol.UDP
+        set(value) {
+            field = value
+            notifyPropertyChanged(BR.xrayProtocol)
+        }
+
     private constructor(parcel: Parcel) {
         addresses = parcel.readString() ?: ""
         dnsServers = parcel.readString() ?: ""
@@ -149,6 +157,7 @@ class InterfaceProxy : BaseObservable, Parcelable {
         underloadPacketMagicHeader = parcel.readString() ?: ""
         transportPacketMagicHeader = parcel.readString() ?: ""
         privateKey = parcel.readString() ?: ""
+        xrayProtocol = XrayProtocol.values()[parcel.readInt()]
     }
 
     constructor(other: Interface) {
@@ -170,6 +179,7 @@ class InterfaceProxy : BaseObservable, Parcelable {
         transportPacketMagicHeader = other.transportPacketMagicHeader.map { it.toString() }.orElse("")
         val keyPair = other.keyPair
         privateKey = keyPair.privateKey.toBase64()
+        xrayProtocol = other.xrayProtocol
     }
 
     constructor()
@@ -202,6 +212,7 @@ class InterfaceProxy : BaseObservable, Parcelable {
         if (underloadPacketMagicHeader.isNotEmpty()) builder.parseUnderloadPacketMagicHeader(underloadPacketMagicHeader)
         if (transportPacketMagicHeader.isNotEmpty()) builder.parseTransportPacketMagicHeader(transportPacketMagicHeader)
         if (privateKey.isNotEmpty()) builder.parsePrivateKey(privateKey)
+        builder.setXrayProtocol(xrayProtocol)
         return builder.build()
     }
 
@@ -222,6 +233,7 @@ class InterfaceProxy : BaseObservable, Parcelable {
         dest.writeString(underloadPacketMagicHeader)
         dest.writeString(transportPacketMagicHeader)
         dest.writeString(privateKey)
+        dest.writeInt(xrayProtocol.ordinal)
     }
 
     private class InterfaceProxyCreator : Parcelable.Creator<InterfaceProxy> {
