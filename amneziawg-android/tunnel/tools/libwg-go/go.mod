@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/amnezia-vpn/amneziawg-go v0.2.15
 	golang.org/x/sys v0.33.0
+	github.com/amnezia-vpn/amnezia-xray-core v0.0.0
 )
 
 require (
@@ -15,3 +16,6 @@ require (
 	golang.org/x/net v0.41.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 )
+
+replace github.com/amnezia-vpn/amneziawg-go => ../../../amneziawg-go
+replace github.com/amnezia-vpn/amnezia-xray-core => ../../../amnezia-xray-core
