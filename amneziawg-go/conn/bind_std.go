@@ -18,6 +18,8 @@ import (
 
 	"github.com/amnezia-vpn/amnezia-xray-core/core"
 	xraynet "github.com/amnezia-vpn/amnezia-xray-core/common/net"
+	"github.com/amnezia-vpn/amneziawg-go/device"
+	"github.com/amnezia-vpn/amneziawg-go/xray"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 )
@@ -50,13 +52,23 @@ type StdNetBind struct {
 	blackhole6 bool
 
 	xrayServer core.Server
-	xrayConn   net.Conn
+	xrayConns  map[string]net.Conn
 	xrayMutex  sync.Mutex
+	recv       chan *ReceivedPacket
+	log        *device.Logger
 }
 
-func NewStdNetBind(xrayServer core.Server) Bind {
+type ReceivedPacket struct {
+	data []byte
+	ep   Endpoint
+}
+
+func NewStdNetBind(xrayServer core.Server, log *device.Logger) Bind {
 	return &StdNetBind{
 		xrayServer: xrayServer,
+		xrayConns:  make(map[string]net.Conn),
+		recv:       make(chan *ReceivedPacket, 1024),
+		log:        log,
 		udpAddrPool: sync.Pool{
 			New: func() any {
 				return &net.UDPAddr{
@@ -150,6 +162,10 @@ func (s *StdNetBind) Open(uport uint16) ([]ReceiveFunc, uint16, error) {
 
 	var err error
 	var tries int
+
+	if s.xrayServer != nil {
+		return []ReceiveFunc{s.ReceiveXray}, 0, nil
+	}
 
 	if s.ipv4 != nil || s.ipv6 != nil {
 		return nil, 0, ErrBindAlreadyOpen
@@ -326,6 +342,14 @@ func (s *StdNetBind) Close() error {
 	s.ipv4RxOffload = false
 	s.ipv6TxOffload = false
 	s.ipv6RxOffload = false
+
+	s.xrayMutex.Lock()
+	for _, conn := range s.xrayConns {
+		conn.Close()
+	}
+	s.xrayConns = make(map[string]net.Conn)
+	s.xrayMutex.Unlock()
+
 	if err1 != nil {
 		return err1
 	}
@@ -348,27 +372,30 @@ func (e ErrUDPGSODisabled) Unwrap() error {
 func (s *StdNetBind) Send(bufs [][]byte, endpoint Endpoint) error {
 	if s.xrayServer != nil {
 		s.xrayMutex.Lock()
-		if s.xrayConn == nil {
+		conn, ok := s.xrayConns[endpoint.DstToString()]
+		if !ok {
 			dest := xraynet.Destination{
 				Network: xraynet.Network_TCP,
-				Address: xraynet.IPAddress(endpoint.DstIP()),
+				Address: xraynet.IPAddress(endpoint.DstIP().AsSlice()),
 				Port:    xraynet.Port(endpoint.(*StdNetEndpoint).Port()),
 			}
-			conn, err := core.Dial(context.Background(), s.xrayServer.(*core.Instance), dest)
+			newConn, err := xray.Dial(context.Background(), s.xrayServer, dest)
 			if err != nil {
 				s.xrayMutex.Unlock()
 				return err
 			}
-			s.xrayConn = conn
+			s.xrayConns[endpoint.DstToString()] = newConn
+			conn = newConn
+			go xray.Receive(conn, s.recv, endpoint, s.log)
 		}
 		s.xrayMutex.Unlock()
 
 		for _, buf := range bufs {
-			_, err := s.xrayConn.Write(buf)
+			_, err := conn.Write(buf)
 			if err != nil {
 				s.xrayMutex.Lock()
-				s.xrayConn.Close()
-				s.xrayConn = nil
+				conn.Close()
+				delete(s.xrayConns, endpoint.DstToString())
 				s.xrayMutex.Unlock()
 				return err
 			}
@@ -577,4 +604,14 @@ func splitCoalescedMessages(msgs []ipv6.Message, firstMsgAt int, getGSO getGSOFu
 		}
 	}
 	return n, nil
+}
+
+func (s *StdNetBind) ReceiveXray(buffs [][]byte, sizes []int, eps []Endpoint) (int, error) {
+	i := 0
+	pkt := <-s.recv
+	copy(buffs[i], pkt.data)
+	sizes[i] = len(pkt.data)
+	eps[i] = pkt.ep
+	i++
+	return i, nil
 }
