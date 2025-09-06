@@ -369,8 +369,8 @@ public final class GoBackend implements Backend {
         final Statistics stats = getStatistics(tunnel);
         boolean hasZeroHandshake = false;
         for (final Peer peer : config.getPeers()) {
-            final Statistics.Peer a = stats.get(peer.getPublicKey());
-            if (a != null && a.getLatestHandshakeEpochMillis() == 0) {
+            final Statistics.PeerStats p = stats.peer(peer.getPublicKey());
+            if (p != null && p.latestHandshakeEpochMillis() == 0) {
                 hasZeroHandshake = true;
                 break;
             }
