@@ -74,12 +74,9 @@ func NewStdNetBind() Bind {
 }
 
 type StdNetEndpoint struct {
-	// AddrPort is the endpoint destination.
 	netip.AddrPort
-	// src is the current sticky source address and interface index, if
-	// supported. Typically this is a PKTINFO structure from/for control
-	// messages, see unix.PKTINFO for an example.
-	src []byte
+	src   []byte
+	isTCP bool
 }
 
 var (
@@ -94,6 +91,7 @@ func (*StdNetBind) ParseEndpoint(s string) (Endpoint, error) {
 	}
 	return &StdNetEndpoint{
 		AddrPort: e,
+		isTCP:    false,
 	}, nil
 }
 
