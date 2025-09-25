@@ -305,3 +305,9 @@ func (peer *Peer) markEndpointSrcForClearing() {
 	}
 	peer.endpoint.clearSrcOnTx = true
 }
+
+func (peer *Peer) setEndpoint(endpoint conn.Endpoint) {
+	peer.endpoint.Lock()
+	defer peer.endpoint.Unlock()
+	peer.endpoint.val = endpoint
+}

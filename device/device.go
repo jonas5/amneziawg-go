@@ -130,6 +130,7 @@ type Device struct {
 	closed   chan struct{}
 	log      *Logger
 
+	workers sync.WaitGroup
 	version Version
 	awg     awg.Protocol
 }
@@ -242,11 +243,11 @@ func (device *Device) downLocked() error {
 		device.log.Errorf("Bind close failed: %v", err)
 	}
 
-	device.peers.RLock()
+	device.peers.Lock()
 	for _, peer := range device.peers.keyMap {
 		peer.Stop()
 	}
-	device.peers.RUnlock()
+	device.peers.Unlock()
 	return err
 }
 
@@ -353,6 +354,7 @@ func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *Logger) *Device {
 	// start workers
 
 	cpus := runtime.NumCPU()
+	device.workers.Add(cpus*3 + 2)
 	device.state.stopping.Wait()
 	device.queue.encryption.wg.Add(cpus) // One for each RoutineHandshake
 	for i := 0; i < cpus; i++ {
@@ -413,33 +415,35 @@ func (device *Device) RemoveAllPeers() {
 
 func (device *Device) Close() {
 	device.state.Lock()
-	defer device.state.Unlock()
-	device.ipcMutex.Lock()
-	defer device.ipcMutex.Unlock()
 	if device.isClosed() {
+		device.state.Unlock()
 		return
 	}
 	device.state.state.Store(uint32(deviceStateClosed))
+	device.state.Unlock()
+
 	device.log.Verbosef("Device closing")
 
+	// Stop all inputs, which will lead to the closing of queues.
 	device.tun.device.Close()
 	device.downLocked()
 
-	// Remove peers before closing queues,
-	// because peers assume that queues are active.
-	device.RemoveAllPeers()
-
-	// We kept a reference to the encryption and decryption queues,
-	// in case we started any new peers that might write to them.
-	// No new peers are coming; we are done with these queues.
-	device.queue.encryption.wg.Done()
-	device.queue.decryption.wg.Done()
-	device.queue.handshake.wg.Done()
+	// Wait for all routines to stop.
 	device.state.stopping.Wait()
+	device.net.stopping.Wait()
+	device.queue.handshake.wg.Wait()
+	close(device.queue.handshake.c)
+	device.queue.decryption.wg.Wait()
+	close(device.queue.decryption.c)
+	device.queue.encryption.wg.Wait()
+	close(device.queue.encryption.c)
+	device.workers.Wait()
 
+	device.ipcMutex.Lock()
+	device.RemoveAllPeers()
 	device.rate.limiter.Close()
-
 	device.resetProtocol()
+	device.ipcMutex.Unlock()
 
 	device.log.Verbosef("Device closed")
 	close(device.closed)
@@ -934,4 +938,39 @@ func (device *Device) handleTransport(size int, packet *[]byte, buffer *[MaxMess
 	}
 
 	return msgType, nil
+}
+
+func (device *Device) LookupOrCreatePeer(pk NoisePublicKey) (*Peer, error) {
+	device.peers.Lock()
+	defer device.peers.Unlock()
+
+	peer, ok := device.peers.keyMap[pk]
+	if ok {
+		return peer, nil
+	}
+
+	if len(device.peers.keyMap) >= MaxPeers {
+		return nil, errors.New("too many peers")
+	}
+
+	peer = new(Peer)
+	peer.cookieGenerator.Init(pk)
+	peer.device = device
+	peer.queue.outbound = newAutodrainingOutboundQueue(device)
+	peer.queue.inbound = newAutodrainingInboundQueue(device)
+	peer.queue.staged = make(chan *QueueOutboundElementsContainer, QueueStagedSize)
+
+	device.staticIdentity.RLock()
+	handshake := &peer.handshake
+	handshake.mutex.Lock()
+	handshake.precomputedStaticStatic, _ = device.staticIdentity.privateKey.sharedSecret(pk)
+	handshake.remoteStatic = pk
+	handshake.mutex.Unlock()
+	device.staticIdentity.RUnlock()
+
+	peer.timersInit()
+
+	device.peers.keyMap[pk] = peer
+
+	return peer, nil
 }

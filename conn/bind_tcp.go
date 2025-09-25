@@ -21,22 +21,34 @@ var (
 	_ Bind = (*TCPBind)(nil)
 )
 
+type receiveResult struct {
+	buff []byte
+	ep   Endpoint
+	err  error
+}
+
 type TCPBind struct {
-	mu            sync.Mutex
-	lis4          net.Listener
-	lis6          net.Listener
-	conns         map[netip.AddrPort]net.Conn
-	recv          chan *receiveResult
-	accepts       sync.WaitGroup
-	acceptDone    chan struct{}
+	mu         sync.Mutex
+	lis4       net.Listener
+	lis6       net.Listener
+	conns      map[netip.AddrPort]net.Conn
+	recv       chan *receiveResult
+	accepts    sync.WaitGroup
+	acceptDone chan struct{}
+	closed     bool
 }
 
 func NewTCPBind() Bind {
 	return &TCPBind{
-		conns:         make(map[netip.AddrPort]net.Conn),
-		recv:          make(chan *receiveResult, IdealBatchSize),
-		acceptDone:    make(chan struct{}),
+		conns:      make(map[netip.AddrPort]net.Conn),
+		recv:       make(chan *receiveResult, IdealBatchSize),
+		acceptDone: make(chan struct{}),
 	}
+}
+
+func (t *TCPBind) SetMark(mark uint32) error {
+	// TODO: Set SO_MARK on the socket.
+	return nil
 }
 
 func (t *TCPBind) Open(uport uint16) ([]ReceiveFunc, uint16, error) {
@@ -95,6 +107,12 @@ again:
 
 func (t *TCPBind) Close() error {
 	t.mu.Lock()
+	if t.closed {
+		t.mu.Unlock()
+		return nil
+	}
+	t.closed = true
+
 	if t.lis4 != nil {
 		t.lis4.Close()
 	}

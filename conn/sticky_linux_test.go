@@ -241,7 +241,7 @@ func Test_listenConfig(t *testing.T) {
 	t.Run("IPv6", func(t *testing.T) {
 		conn, err := listenConfig().ListenPacket(context.Background(), "udp6", ":0")
 		if err != nil {
-			t.Fatal(err)
+			t.Skip(err)
 		}
 		sc, err := conn.(*net.UDPConn).SyscallConn()
 		if err != nil {

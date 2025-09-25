@@ -6,7 +6,6 @@
 package conn
 
 import (
-	"errors"
 	"strings"
 )
 
@@ -38,6 +37,15 @@ func (p *ParallelBind) Open(uport uint16) ([]ReceiveFunc, uint16, error) {
 	}
 
 	return append(udpFns, tcpFns...), port, nil
+}
+
+func (p *ParallelBind) SetMark(mark uint32) error {
+	err1 := p.udp.SetMark(mark)
+	err2 := p.tcp.SetMark(mark)
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }
 
 func (p *ParallelBind) Close() error {

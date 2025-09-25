@@ -253,7 +253,10 @@ func (device *Device) RoutineReceiveIncoming(
 func (device *Device) RoutineDecryption(id int) {
 	var nonce [chacha20poly1305.NonceSize]byte
 
-	defer device.log.Verbosef("Routine: decryption worker %d - stopped", id)
+	defer func() {
+		device.log.Verbosef("Routine: decryption worker %d - stopped", id)
+		device.workers.Done()
+	}()
 	device.log.Verbosef("Routine: decryption worker %d - started", id)
 
 	for elemsContainer := range device.queue.decryption.c {
@@ -287,6 +290,7 @@ func (device *Device) RoutineHandshake(id int) {
 	defer func() {
 		device.log.Verbosef("Routine: handshake worker %d - stopped", id)
 		device.queue.encryption.wg.Done()
+		device.workers.Done()
 	}()
 	device.log.Verbosef("Routine: handshake worker %d - started", id)
 

@@ -76,3 +76,11 @@ func (key NoisePublicKey) Equals(tar NoisePublicKey) bool {
 func (key *NoisePresharedKey) FromHex(src string) error {
 	return loadExactHex(key[:], src)
 }
+
+func (key NoisePrivateKey) String() string {
+	return hex.EncodeToString(key[:])
+}
+
+func (key NoisePublicKey) String() string {
+	return hex.EncodeToString(key[:])
+}

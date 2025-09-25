@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/constraints"
 )
 
 func TestNewMagicHeaderSameValue(t *testing.T) {
@@ -199,7 +200,7 @@ func TestParseMagicHeader(t *testing.T) {
 			key:      "header13",
 			value:    "10-20-30",
 			expected: MagicHeader{},
-			errorMsg: "parse key: header13; value: 10-20-30;",
+			errorMsg: "parse max key: header13; value: 20-30;",
 		},
 		{
 			name:     "empty value",
@@ -386,18 +387,18 @@ func TestNewMagicHeaders(t *testing.T) {
 }
 
 // Mock PRNG for testing
-type mockPRNG struct {
-	returnValue uint32
+type mockPRNG[T constraints.Integer] struct {
+	returnValue T
 }
 
-func (m *mockPRNG) RandomSizeInRange(min, max uint32) uint32 {
+func (m *mockPRNG[T]) RandomSizeInRange(min, max T) T {
 	return m.returnValue
 }
 
-func (m *mockPRNG) Get() uint64 {
+func (m *mockPRNG[T]) Get() uint64 {
 	return 0
 }
-func (m *mockPRNG) ReadSize(size int) []byte {
+func (m *mockPRNG[T]) ReadSize(size int) []byte {
 	return make([]byte, size)
 }
 
@@ -470,7 +471,7 @@ func TestMagicHeaders_Get(t *testing.T) {
 			// Create a new instance with mock PRNG for each test
 			testMagicHeaders := MagicHeaders{
 				Values:          headers,
-				randomGenerator: &mockPRNG{returnValue: tt.mockValue},
+				randomGenerator: &mockPRNG[uint32]{returnValue: tt.mockValue},
 			}
 
 			result, err := testMagicHeaders.Get(tt.defaultMsgType)

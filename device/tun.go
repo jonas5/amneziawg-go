@@ -14,6 +14,10 @@ import (
 const DefaultMTU = 1420
 
 func (device *Device) RoutineTUNEventReader() {
+	defer func() {
+		device.log.Verbosef("Routine: event worker - stopped")
+		device.workers.Done()
+	}()
 	device.log.Verbosef("Routine: event worker - started")
 
 	for event := range device.tun.device.Events() {
@@ -48,6 +52,4 @@ func (device *Device) RoutineTUNEventReader() {
 			device.Down()
 		}
 	}
-
-	device.log.Verbosef("Routine: event worker - stopped")
 }

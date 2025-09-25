@@ -8,6 +8,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -32,10 +33,6 @@ const (
 	ENV_WG_PROCESS_FOREGROUND = "WG_PROCESS_FOREGROUND"
 )
 
-func printUsage() {
-	fmt.Printf("Usage: %s [-f/--foreground] INTERFACE-NAME\n", os.Args[0])
-}
-
 func warning() {
 	switch runtime.GOOS {
 	case "linux", "freebsd", "openbsd":
@@ -58,41 +55,35 @@ func warning() {
 }
 
 func main() {
-	if len(os.Args) == 2 && os.Args[1] == "--version" {
+	if len(os.Args) > 1 && os.Args[1] == "--version" {
 		fmt.Printf("amneziawg-go %s\n\nUserspace AmneziaWG daemon for %s-%s.\nInformation available at https://amnezia.org\n", Version, runtime.GOOS, runtime.GOARCH)
 		return
 	}
 
 	warning()
 
-	var foreground bool
-	var interfaceName string
-	if len(os.Args) < 2 || len(os.Args) > 3 {
-		printUsage()
-		return
+	var (
+		foreground = flag.Bool("f", false, "run in foreground")
+		configFile = flag.String("c", "", "path to a configuration file")
+	)
+	flag.BoolVar(foreground, "foreground", *foreground, "run in foreground")
+	flag.StringVar(configFile, "config", *configFile, "path to a configuration file")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [options] INTERFACE-NAME\n", os.Args[0])
+		flag.PrintDefaults()
 	}
 
-	switch os.Args[1] {
+	flag.Parse()
 
-	case "-f", "--foreground":
-		foreground = true
-		if len(os.Args) != 3 {
-			printUsage()
-			return
-		}
-		interfaceName = os.Args[2]
-
-	default:
-		foreground = false
-		if len(os.Args) != 2 {
-			printUsage()
-			return
-		}
-		interfaceName = os.Args[1]
+	if flag.NArg() != 1 {
+		flag.Usage()
+		os.Exit(ExitSetupFailed)
 	}
+	interfaceName := flag.Arg(0)
 
-	if !foreground {
-		foreground = os.Getenv(ENV_WG_PROCESS_FOREGROUND) == "1"
+	if !*foreground {
+		*foreground = os.Getenv(ENV_WG_PROCESS_FOREGROUND) == "1"
 	}
 
 	// get log level (default: info)
@@ -176,7 +167,7 @@ func main() {
 	}
 	// daemonize the process
 
-	if !foreground {
+	if !*foreground {
 		env := os.Environ()
 		env = append(env, fmt.Sprintf("%s=3", ENV_WG_TUN_FD))
 		env = append(env, fmt.Sprintf("%s=4", ENV_WG_UAPI_FD))
@@ -223,6 +214,14 @@ func main() {
 	}
 
 	device := device.NewDevice(tdev, conn.NewDefaultBind(), logger)
+
+	if *configFile != "" {
+		err := device.LoadConfig(*configFile)
+		if err != nil {
+			logger.Errorf("Failed to load configuration from %q: %v", *configFile, err)
+			os.Exit(ExitSetupFailed)
+		}
+	}
 
 	logger.Verbosef("Device started")
 

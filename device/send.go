@@ -288,6 +288,7 @@ func (device *Device) RoutineReadFromTUN() {
 		device.log.Verbosef("Routine: TUN reader - stopped")
 		device.state.stopping.Done()
 		device.queue.encryption.wg.Done()
+		device.workers.Done()
 	}()
 
 	device.log.Verbosef("Routine: TUN reader - started")
@@ -520,7 +521,10 @@ func (device *Device) RoutineEncryption(id int) {
 	var paddingZeros [PaddingMultiple]byte
 	var nonce [chacha20poly1305.NonceSize]byte
 
-	defer device.log.Verbosef("Routine: encryption worker %d - stopped", id)
+	defer func() {
+		device.log.Verbosef("Routine: encryption worker %d - stopped", id)
+		device.workers.Done()
+	}()
 	device.log.Verbosef("Routine: encryption worker %d - started", id)
 
 	for elemsContainer := range device.queue.encryption.c {
