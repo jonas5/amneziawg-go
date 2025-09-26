@@ -871,6 +871,25 @@ func (device *Device) ProcessAWGPacket(size int, packet *[]byte, buffer *[MaxMes
 
 	expectedMsgType, isKnownSize := packetSizeToMsgType[size]
 	if !isKnownSize {
+		// It's not a known AWG packet size. Check for standard handshake packet sizes.
+		var inferredMsgType uint32
+		switch size {
+		case MessageInitiationSize:
+			inferredMsgType = DefaultMessageInitiationType
+		case MessageResponseSize:
+			inferredMsgType = DefaultMessageResponseType
+		case MessageCookieReplySize:
+			inferredMsgType = DefaultMessageCookieReplyType
+		}
+
+		if inferredMsgType != 0 {
+			// Size matches a standard handshake packet. Verify the type field.
+			if binary.LittleEndian.Uint32((*packet)[:4]) == inferredMsgType {
+				device.log.Verbosef("awg: received standard handshake packet of type %d", inferredMsgType)
+				return inferredMsgType, nil
+			}
+		}
+
 		msgType, err := device.handleTransport(size, packet, buffer)
 
 		if err != nil {

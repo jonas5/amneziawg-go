@@ -32,20 +32,15 @@ var (
 type StdNetBind struct {
 	mu            sync.Mutex // protects all fields except as specified
 	ipv4          *net.UDPConn
-	ipv6          *net.UDPConn
 	ipv4PC        *ipv4.PacketConn // will be nil on non-Linux
-	ipv6PC        *ipv6.PacketConn // will be nil on non-Linux
 	ipv4TxOffload bool
 	ipv4RxOffload bool
-	ipv6TxOffload bool
-	ipv6RxOffload bool
 
 	// these two fields are not guarded by mu
 	udpAddrPool sync.Pool
 	msgsPool    sync.Pool
 
 	blackhole4 bool
-	blackhole6 bool
 }
 
 func NewStdNetBind() Bind {
@@ -142,34 +137,24 @@ func (s *StdNetBind) Open(uport uint16) ([]ReceiveFunc, uint16, error) {
 	var err error
 	var tries int
 
-	if s.ipv4 != nil || s.ipv6 != nil {
+	if s.ipv4 != nil {
 		return nil, 0, ErrBindAlreadyOpen
 	}
 
-	// Attempt to open ipv4 and ipv6 listeners on the same port.
-	// If uport is 0, we can retry on failure.
 again:
 	port := int(uport)
-	var v4conn, v6conn *net.UDPConn
+	var v4conn *net.UDPConn
 	var v4pc *ipv4.PacketConn
-	var v6pc *ipv6.PacketConn
 
 	v4conn, port, err = listenNet("udp4", port)
-	if err != nil && !errors.Is(err, syscall.EAFNOSUPPORT) {
+	if err != nil {
+		if uport == 0 && errors.Is(err, syscall.EADDRINUSE) && tries < 100 {
+			tries++
+			goto again
+		}
 		return nil, 0, err
 	}
 
-	// Listen on the same port as we're using for ipv4.
-	v6conn, port, err = listenNet("udp6", port)
-	if uport == 0 && errors.Is(err, syscall.EADDRINUSE) && tries < 100 {
-		v4conn.Close()
-		tries++
-		goto again
-	}
-	if err != nil && !errors.Is(err, syscall.EAFNOSUPPORT) {
-		v4conn.Close()
-		return nil, 0, err
-	}
 	var fns []ReceiveFunc
 	if v4conn != nil {
 		s.ipv4TxOffload, s.ipv4RxOffload = supportsUDPOffload(v4conn)
@@ -179,15 +164,6 @@ again:
 		}
 		fns = append(fns, s.makeReceiveIPv4(v4pc, v4conn, s.ipv4RxOffload))
 		s.ipv4 = v4conn
-	}
-	if v6conn != nil {
-		s.ipv6TxOffload, s.ipv6RxOffload = supportsUDPOffload(v6conn)
-		if runtime.GOOS == "linux" || runtime.GOOS == "android" {
-			v6pc = ipv6.NewPacketConn(v6conn)
-			s.ipv6PC = v6pc
-		}
-		fns = append(fns, s.makeReceiveIPv6(v6pc, v6conn, s.ipv6RxOffload))
-		s.ipv6 = v6conn
 	}
 	if len(fns) == 0 {
 		return nil, 0, syscall.EAFNOSUPPORT
@@ -281,12 +257,6 @@ func (s *StdNetBind) makeReceiveIPv4(pc *ipv4.PacketConn, conn *net.UDPConn, rxO
 	}
 }
 
-func (s *StdNetBind) makeReceiveIPv6(pc *ipv6.PacketConn, conn *net.UDPConn, rxOffload bool) ReceiveFunc {
-	return func(bufs [][]byte, sizes []int, eps []Endpoint) (n int, err error) {
-		return s.receiveIP(pc, conn, rxOffload, bufs, sizes, eps)
-	}
-}
-
 // TODO: When all Binds handle IdealBatchSize, remove this dynamic function and
 // rename the IdealBatchSize constant to BatchSize.
 func (s *StdNetBind) BatchSize() int {
@@ -300,27 +270,16 @@ func (s *StdNetBind) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var err1, err2 error
+	var err error
 	if s.ipv4 != nil {
-		err1 = s.ipv4.Close()
+		err = s.ipv4.Close()
 		s.ipv4 = nil
 		s.ipv4PC = nil
 	}
-	if s.ipv6 != nil {
-		err2 = s.ipv6.Close()
-		s.ipv6 = nil
-		s.ipv6PC = nil
-	}
 	s.blackhole4 = false
-	s.blackhole6 = false
 	s.ipv4TxOffload = false
 	s.ipv4RxOffload = false
-	s.ipv6TxOffload = false
-	s.ipv6RxOffload = false
-	if err1 != nil {
-		return err1
-	}
-	return err2
+	return err
 }
 
 type ErrUDPGSODisabled struct {
@@ -342,13 +301,9 @@ func (s *StdNetBind) Send(bufs [][]byte, endpoint Endpoint) error {
 	conn := s.ipv4
 	offload := s.ipv4TxOffload
 	br := batchWriter(s.ipv4PC)
-	is6 := false
 	if endpoint.DstIP().Is6() {
-		blackhole = s.blackhole6
-		conn = s.ipv6
-		br = s.ipv6PC
-		is6 = true
-		offload = s.ipv6TxOffload
+		s.mu.Unlock()
+		return syscall.EAFNOSUPPORT
 	}
 	s.mu.Unlock()
 
@@ -363,15 +318,11 @@ func (s *StdNetBind) Send(bufs [][]byte, endpoint Endpoint) error {
 	defer s.putMessages(msgs)
 	ua := s.udpAddrPool.Get().(*net.UDPAddr)
 	defer s.udpAddrPool.Put(ua)
-	if is6 {
-		as16 := endpoint.DstIP().As16()
-		copy(ua.IP, as16[:])
-		ua.IP = ua.IP[:16]
-	} else {
-		as4 := endpoint.DstIP().As4()
-		copy(ua.IP, as4[:])
-		ua.IP = ua.IP[:4]
-	}
+
+	as4 := endpoint.DstIP().As4()
+	copy(ua.IP, as4[:])
+	ua.IP = ua.IP[:4]
+
 	ua.Port = int(endpoint.(*StdNetEndpoint).Port())
 	var (
 		retried bool
@@ -384,11 +335,7 @@ retry:
 		if err != nil && offload && errShouldDisableUDPGSO(err) {
 			offload = false
 			s.mu.Lock()
-			if is6 {
-				s.ipv6TxOffload = false
-			} else {
-				s.ipv4TxOffload = false
-			}
+			s.ipv4TxOffload = false
 			s.mu.Unlock()
 			retried = true
 			goto retry

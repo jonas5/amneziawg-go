@@ -8,6 +8,7 @@ package device
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -576,4 +577,83 @@ func TestBatchSize(t *testing.T) {
 	if want, got := 128, d.BatchSize(); got != want {
 		t.Errorf("expected batch size %d, got %d", want, got)
 	}
+}
+
+func TestProcessAWGPacket_StandardHandshake(t *testing.T) {
+	dev := NewDevice(
+		tuntest.NewChannelTUN().TUN(),
+		bindtest.NewChannelBinds()[0],
+		NewLogger(LogLevelError, ""),
+	)
+	defer dev.Close()
+
+	// Enable AWG mode by setting some AWG-specific config
+	awgConfig := uapiCfg("jc", "1")
+	if err := dev.IpcSet(awgConfig); err != nil {
+		t.Fatalf("Failed to set AWG config: %v", err)
+	}
+
+	if !dev.isAWG() {
+		t.Fatal("Device should be in AWG mode for this test")
+	}
+
+	// Test case for MessageInitiationType
+	t.Run("InitiationPacket", func(t *testing.T) {
+		packet := make([]byte, MessageInitiationSize)
+		binary.LittleEndian.PutUint32(packet[:4], DefaultMessageInitiationType)
+		buffer := [MaxMessageSize]byte{}
+		copy(buffer[:], packet)
+
+		msgType, err := dev.ProcessAWGPacket(len(packet), &packet, &buffer)
+		if err != nil {
+			t.Fatalf("ProcessAWGPacket failed: %v", err)
+		}
+		if msgType != DefaultMessageInitiationType {
+			t.Errorf("Expected message type %d, got %d", DefaultMessageInitiationType, msgType)
+		}
+	})
+
+	// Test case for MessageResponseType
+	t.Run("ResponsePacket", func(t *testing.T) {
+		packet := make([]byte, MessageResponseSize)
+		binary.LittleEndian.PutUint32(packet[:4], DefaultMessageResponseType)
+		buffer := [MaxMessageSize]byte{}
+		copy(buffer[:], packet)
+
+		msgType, err := dev.ProcessAWGPacket(len(packet), &packet, &buffer)
+		if err != nil {
+			t.Fatalf("ProcessAWGPacket failed: %v", err)
+		}
+		if msgType != DefaultMessageResponseType {
+			t.Errorf("Expected message type %d, got %d", DefaultMessageResponseType, msgType)
+		}
+	})
+
+	// Test case for MessageCookieReplyType
+	t.Run("CookieReplyPacket", func(t *testing.T) {
+		packet := make([]byte, MessageCookieReplySize)
+		binary.LittleEndian.PutUint32(packet[:4], DefaultMessageCookieReplyType)
+		buffer := [MaxMessageSize]byte{}
+		copy(buffer[:], packet)
+
+		msgType, err := dev.ProcessAWGPacket(len(packet), &packet, &buffer)
+		if err != nil {
+			t.Fatalf("ProcessAWGPacket failed: %v", err)
+		}
+		if msgType != DefaultMessageCookieReplyType {
+			t.Errorf("Expected message type %d, got %d", DefaultMessageCookieReplyType, msgType)
+		}
+	})
+
+	// Test case for a junk packet (should fail)
+	t.Run("JunkPacket", func(t *testing.T) {
+		packet := make([]byte, 200) // Some random size not matching any known type
+		buffer := [MaxMessageSize]byte{}
+		copy(buffer[:], packet)
+
+		_, err := dev.ProcessAWGPacket(len(packet), &packet, &buffer)
+		if err == nil {
+			t.Error("Expected an error for junk packet, but got nil")
+		}
+	})
 }

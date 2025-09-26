@@ -46,20 +46,5 @@ func (s *StdNetBind) SetMark(mark uint32) error {
 			return err
 		}
 	}
-	if s.ipv6 != nil {
-		fd, err := s.ipv6.SyscallConn()
-		if err != nil {
-			return err
-		}
-		err = fd.Control(func(fd uintptr) {
-			operr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, fwmarkIoctl, int(mark))
-		})
-		if err == nil {
-			err = operr
-		}
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
