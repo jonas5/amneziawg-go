@@ -55,32 +55,52 @@ func (t *TCPBind) Open(uport uint16) ([]ReceiveFunc, uint16, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	var err error
 	var tries int
 
-	if t.lis4 != nil {
+	if t.lis4 != nil || t.lis6 != nil {
 		return nil, 0, ErrBindAlreadyOpen
 	}
 
 again:
 	port := int(uport)
-	var lis4 net.Listener
-	var err error
+	var lis4, lis6 net.Listener
 
 	lis4, err = net.Listen("tcp4", ":"+strconv.Itoa(port))
+	if err != nil && !errors.Is(err, syscall.EAFNOSUPPORT) {
+		return nil, 0, err
+	}
 
-	if err != nil {
-		if uport == 0 && errors.Is(err, syscall.EADDRINUSE) && tries < 100 {
-			tries++
-			goto again
+	lis6, err = net.Listen("tcp6", ":"+strconv.Itoa(port))
+	if uport == 0 && errors.Is(err, syscall.EADDRINUSE) && tries < 100 {
+		if lis4 != nil {
+			lis4.Close()
+		}
+		tries++
+		goto again
+	}
+	if err != nil && !errors.Is(err, syscall.EAFNOSUPPORT) {
+		if lis4 != nil {
+			lis4.Close()
 		}
 		return nil, 0, err
 	}
 
 	var fns []ReceiveFunc
-	t.lis4 = lis4
-	t.accepts.Add(1)
-	go t.accept(lis4)
-	fns = append(fns, t.makeReceive())
+	if lis4 != nil {
+		t.lis4 = lis4
+		t.accepts.Add(1)
+		go t.accept(lis4)
+	}
+	if lis6 != nil {
+		t.lis6 = lis6
+		t.accepts.Add(1)
+		go t.accept(lis6)
+	}
+
+	if t.lis4 != nil || t.lis6 != nil {
+		fns = append(fns, t.makeReceive())
+	}
 
 	return fns, uint16(port), nil
 }
@@ -96,6 +116,9 @@ func (t *TCPBind) Close() error {
 	if t.lis4 != nil {
 		t.lis4.Close()
 	}
+	if t.lis6 != nil {
+		t.lis6.Close()
+	}
 	close(t.acceptDone)
 	t.mu.Unlock()
 
@@ -110,6 +133,7 @@ func (t *TCPBind) Close() error {
 	}
 
 	t.lis4 = nil
+	t.lis6 = nil
 	t.conns = make(map[netip.AddrPort]net.Conn)
 
 	return errors.Join(errs...)

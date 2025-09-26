@@ -6,10 +6,7 @@
 package conn
 
 import (
-	"errors"
-	"log"
 	"strings"
-	"syscall"
 )
 
 var (
@@ -36,11 +33,7 @@ func (p *ParallelBind) Open(uport uint16) ([]ReceiveFunc, uint16, error) {
 
 	tcpFns, _, err := p.tcp.Open(port)
 	if err != nil {
-		if errors.Is(err, syscall.EADDRINUSE) {
-			log.Printf("Warning: Failed to open TCP listener on port %d: %v. Continuing with UDP only.", port, err)
-		} else {
-			log.Printf("Warning: Failed to open TCP listener: %v", err)
-		}
+		// We don't want to fail if the TCP listener fails, so we just ignore the error.
 	}
 
 	return append(udpFns, tcpFns...), port, nil

@@ -389,7 +389,7 @@ func (device *Device) RoutineHandshake(id int) {
 			// consume initiation
 			peer := device.ConsumeMessageInitiation(&msg)
 			if peer == nil {
-				device.log.Verbosef("Received invalid initiation message from %s", elem.endpoint.DstToString())
+				device.log.Verbosef("Received invalid initiation message from %s. This is expected if the client is not yet configured on the server, or if the client is using an incorrect public key.", elem.endpoint.DstToString())
 				goto skip
 			}
 
@@ -425,7 +425,7 @@ func (device *Device) RoutineHandshake(id int) {
 
 			peer := device.ConsumeMessageResponse(&msg)
 			if peer == nil {
-				device.log.Verbosef("Received invalid response message from %s", elem.endpoint.DstToString())
+				device.log.Verbosef("Received invalid response message from %s. This may happen if the public key is incorrect or the session has expired.", elem.endpoint.DstToString())
 				goto skip
 			}
 

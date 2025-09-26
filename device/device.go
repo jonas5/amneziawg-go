@@ -864,63 +864,56 @@ func (device *Device) handlePostConfig(tempAwg *awg.Protocol) error {
 }
 
 func (device *Device) ProcessAWGPacket(size int, packet *[]byte, buffer *[MaxMessageSize]byte) (uint32, error) {
-	// TODO:
-	// if awg.WaitResponse.ShouldWait.IsSet() {
-	// 	awg.WaitResponse.Channel <- struct{}{}
-	// }
+	// Check for standard handshake packet (unpadded)
+	var standardType uint32
+	switch size {
+	case MessageInitiationSize:
+		standardType = DefaultMessageInitiationType
+	case MessageResponseSize:
+		standardType = DefaultMessageResponseType
+	case MessageCookieReplySize:
+		standardType = DefaultMessageCookieReplyType
+	}
+	if standardType != 0 && binary.LittleEndian.Uint32((*packet)[:4]) == standardType {
+		device.log.Verbosef("awg: received standard unpadded handshake packet of type %d", standardType)
+		return standardType, nil
+	}
 
+	// Check for AWG handshake packet (padded)
 	expectedMsgType, isKnownSize := packetSizeToMsgType[size]
-	if !isKnownSize {
-		// It's not a known AWG packet size. Check for standard handshake packet sizes.
-		var inferredMsgType uint32
-		switch size {
-		case MessageInitiationSize:
-			inferredMsgType = DefaultMessageInitiationType
-		case MessageResponseSize:
-			inferredMsgType = DefaultMessageResponseType
-		case MessageCookieReplySize:
-			inferredMsgType = DefaultMessageCookieReplyType
+	if isKnownSize {
+		junkSize := msgTypeToJunkSize[expectedMsgType]
+		actualMsgType, err := device.getMsgType(packet, junkSize)
+
+		// Case A: Valid AWG packet with magic number
+		if err == nil && actualMsgType == expectedMsgType {
+			*packet = (*packet)[junkSize:]
+			return actualMsgType, nil
 		}
 
-		if inferredMsgType != 0 {
-			// Size matches a standard handshake packet. Verify the type field.
-			if binary.LittleEndian.Uint32((*packet)[:4]) == inferredMsgType {
-				device.log.Verbosef("awg: received standard handshake packet of type %d", inferredMsgType)
-				return inferredMsgType, nil
-			}
+		// Case B: Padded standard packet
+		var paddedStandardType uint32
+		var standardSize int
+		if expectedMsgType == MessageInitiationType {
+			paddedStandardType = DefaultMessageInitiationType
+			standardSize = MessageInitiationSize
+		} else if expectedMsgType == MessageResponseType {
+			paddedStandardType = DefaultMessageResponseType
+			standardSize = MessageResponseSize
+		} else if expectedMsgType == MessageCookieReplyType {
+			paddedStandardType = DefaultMessageCookieReplyType
+			standardSize = MessageCookieReplySize
 		}
 
-		msgType, err := device.handleTransport(size, packet, buffer)
-
-		if err != nil {
-			return 0, fmt.Errorf("handle transport: %w", err)
+		if paddedStandardType != 0 && binary.LittleEndian.Uint32((*packet)[:4]) == paddedStandardType {
+			device.log.Verbosef("awg: received standard padded handshake packet of type %d", paddedStandardType)
+			*packet = (*packet)[:standardSize]
+			return paddedStandardType, nil
 		}
-
-		return msgType, nil
 	}
 
-	junkSize := msgTypeToJunkSize[expectedMsgType]
-
-	// transport size can align with other header types;
-	// making sure we have the right actualMsgType
-	actualMsgType, err := device.getMsgType(packet, junkSize)
-	if err != nil {
-		return 0, fmt.Errorf("get msg type: %w", err)
-	}
-
-	if actualMsgType == expectedMsgType {
-		*packet = (*packet)[junkSize:]
-		return actualMsgType, nil
-	}
-
-	device.log.Verbosef("awg: transport packet lined up with another msg type")
-
-	msgType, err := device.handleTransport(size, packet, buffer)
-	if err != nil {
-		return 0, fmt.Errorf("handle transport: %w", err)
-	}
-
-	return msgType, nil
+	// Fallback to transport/junk
+	return device.handleTransport(size, packet, buffer)
 }
 
 func (device *Device) getMsgType(packet *[]byte, junkSize int) (uint32, error) {
